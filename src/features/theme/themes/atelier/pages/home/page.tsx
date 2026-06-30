@@ -1,16 +1,13 @@
 import { Link, useNavigate, useRouteContext } from "@tanstack/react-router";
 import {
-  Activity,
-  CalendarDays,
   Loader2,
   Music2,
   Pause,
   Play,
   SkipBack,
   SkipForward,
-  Sparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   resolveSocialHref,
   SOCIAL_PLATFORMS,
@@ -245,10 +242,6 @@ function ProfileIntroCard({ totalPosts }: { totalPosts: number }) {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/45 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-(--atelier-primary) shadow-sm backdrop-blur dark:bg-white/8">
-            <Sparkles size={13} />
-            Profile
-          </div>
           <h1 className="mb-3 truncate text-2xl font-black leading-tight tracking-normal atelier-text-90 sm:text-3xl">
             {siteConfig.author}
           </h1>
@@ -258,17 +251,17 @@ function ProfileIntroCard({ totalPosts }: { totalPosts: number }) {
         </div>
       </div>
 
-      <div className="relative z-10 mt-7 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+      <div className="relative z-10 mt-7 flex items-end justify-between gap-4">
         <Link
           to="/posts"
           search={{ q: undefined, tagNames: undefined }}
-          className="group/stat flex rounded-2xl px-1 py-1 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--atelier-primary)/60"
+          className="group/stat flex shrink-0 rounded-2xl px-1 py-1 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--atelier-primary)/60"
           aria-label="查看文章"
         >
           <ProfileStat count={totalPosts} label="文章" />
         </Link>
 
-        <div className="flex flex-wrap gap-2 md:justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
           {siteConfig.social
             .filter((link) => link.url)
             .slice(0, 6)
@@ -367,7 +360,7 @@ function MusicShowcaseCard() {
           isPlaying ? "opacity-90" : "opacity-35"
         }`}
       />
-      <div className="relative z-10 flex items-center gap-5">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <div
           className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-white/60 shadow-xl animate-[spin_7s_linear_infinite]"
           style={{ animationPlayState: isPlaying ? "running" : "paused" }}
@@ -381,21 +374,14 @@ function MusicShowcaseCard() {
           <div className="absolute inset-0 bg-black/10" />
           <div className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-300/60 bg-white/85 shadow-inner" />
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-(--atelier-primary) shadow-sm dark:bg-white/8">
-            <Music2 size={13} />
-            {"\u97f3\u4e50"}
-          </div>
+        <div className="min-w-0">
           <h2 className="truncate text-xl font-black tracking-normal atelier-text-90">
-            {currentSong.title}
+            {currentSong.title} - {currentSong.artist}
           </h2>
-          <p className="truncate text-sm font-medium atelier-text-75">
-            {currentSong.artist}
-          </p>
         </div>
       </div>
 
-      <div className="relative z-10 my-5 min-h-7 overflow-hidden">
+      <div className="relative z-10 my-5 min-h-7 overflow-hidden text-center">
         <p className="truncate text-sm font-bold text-(--atelier-primary)">
           {typedLyric || currentLyric || "Instrumental"}
         </p>
@@ -470,7 +456,7 @@ function LyricStrip() {
   const waves = [0, 180, 360, 90, 270];
 
   return (
-    <div className="flex min-h-20 items-center justify-between gap-4 rounded-[1.5rem] border border-white/10 bg-slate-950/80 p-4 shadow-2xl backdrop-blur-xl md:px-6">
+    <div className="hidden min-h-20 items-center justify-between gap-4 rounded-[1.5rem] border border-white/10 bg-slate-950/80 p-4 shadow-2xl backdrop-blur-xl md:flex md:px-6">
       <div className="flex h-9 w-16 shrink-0 items-end justify-center gap-1">
         {waves.map((delay, index) => (
           <span
@@ -500,6 +486,7 @@ function LyricStrip() {
 
 function ContributionHeatmap() {
   const contributionData = useGitHubContributions();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const contributions = contributionData?.contributions ?? [];
   const contributionCount = contributionData?.total?.lastYear ?? null;
   const weeks = useMemo(() => {
@@ -528,14 +515,19 @@ function ContributionHeatmap() {
     "bg-emerald-600 dark:bg-emerald-200/90",
   ];
 
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container || weeks.length === 0) return;
+
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      container.scrollLeft = container.scrollWidth;
+    }
+  }, [weeks.length]);
+
   return (
     <section className="atelier-card-base overflow-hidden p-5 md:p-6">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/45 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-(--atelier-primary) shadow-sm dark:bg-white/8">
-            <Activity size={13} />
-            Research
-          </div>
           <h2 className="text-2xl font-black tracking-normal atelier-text-90">
             项目动态
           </h2>
@@ -552,7 +544,7 @@ function ContributionHeatmap() {
         </div>
       </div>
 
-      <div className="overflow-x-auto pb-2">
+      <div ref={scrollRef} className="overflow-x-auto pb-2">
         <a
           href={`https://github.com/${GITHUB_USERNAME}`}
           target="_blank"
@@ -642,10 +634,6 @@ export function HomePage({ posts, pinnedPosts, popularPosts }: HomePageProps) {
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/45 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-(--atelier-primary) shadow-sm backdrop-blur dark:bg-white/8">
-              <CalendarDays size={13} />
-              Latest
-            </div>
             <h2 className="text-2xl font-black tracking-normal atelier-text-90">
               最新文章
             </h2>

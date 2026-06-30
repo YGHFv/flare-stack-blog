@@ -22,7 +22,8 @@ export function FloatingMusicPlayer() {
 
   if (!isMounted) return null;
 
-  const isHomePage = location.pathname === "/";
+  const isHiddenPage =
+    location.pathname === "/" || location.pathname === "/music";
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
     dragStartRef.current = {
@@ -45,7 +46,7 @@ export function FloatingMusicPlayer() {
     event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
-  if (isHomePage || !isPlaying || !currentSong) return null;
+  if (isHiddenPage || !isPlaying || !currentSong) return null;
 
   return (
     <div

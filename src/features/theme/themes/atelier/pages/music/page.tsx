@@ -10,7 +10,7 @@ import {
   SkipForward,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { AtelierMusicCommentSection } from "../../components/comments/view/music-comment-section";
 import { useMusic } from "../../components/music/music-provider";
 
@@ -44,7 +44,6 @@ export function MusicPage() {
   } = useMusic();
   const [activeTab, setActiveTab] = useState<"lyrics" | "playlist">("lyrics");
   const [searchQuery, setSearchQuery] = useState("");
-  const activeLyricRef = useRef<HTMLDivElement>(null);
 
   function switchTab(tab: "lyrics" | "playlist") {
     setActiveTab(tab);
@@ -71,14 +70,6 @@ export function MusicPage() {
         );
       });
   }, [playlist, searchQuery]);
-
-  useEffect(() => {
-    if (activeTab !== "lyrics") return;
-    activeLyricRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }, [activeLyricIndex, activeTab]);
 
   if (isLoading) {
     return (
@@ -142,12 +133,9 @@ export function MusicPage() {
 
             <div className="w-full text-center">
               <h2 className="truncate text-2xl font-black tracking-normal atelier-text-90">
-                {currentSong.title}
+                {currentSong.title} - {currentSong.artist}
               </h2>
-              <p className="mt-2 truncate text-sm font-bold atelier-text-60">
-                {currentSong.artist}
-              </p>
-              <p className="mx-auto mt-5 min-h-6 max-w-sm truncate text-sm font-black text-(--atelier-primary)">
+              <p className="mx-auto mt-5 min-h-6 max-w-sm truncate text-center text-sm font-black text-(--atelier-primary)">
                 {currentLyric}
               </p>
             </div>
@@ -258,7 +246,6 @@ export function MusicPage() {
                   return (
                     <div
                       key={`${line.time}-${line.text}`}
-                      ref={isActive ? activeLyricRef : null}
                       className={`rounded-2xl px-4 py-2 transition-all duration-500 ${
                         isActive
                           ? "scale-105 bg-white/20 opacity-100 dark:bg-white/8"

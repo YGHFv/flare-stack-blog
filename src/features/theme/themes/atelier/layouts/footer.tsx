@@ -19,24 +19,6 @@ export function Footer(_: FooterProps) {
             author: siteConfig.author,
           })}
         </ClientOnly>
-        <span className="mx-2 text-slate-400">/</span>
-        <a
-          href="/rss.xml"
-          target="_blank"
-          rel="noreferrer"
-          className="font-semibold text-(--atelier-primary) transition-colors hover:text-indigo-500"
-        >
-          RSS
-        </a>
-        <span className="mx-2 text-slate-400">/</span>
-        <a
-          href="/sitemap.xml"
-          target="_blank"
-          rel="noreferrer"
-          className="font-semibold text-(--atelier-primary) transition-colors hover:text-indigo-500"
-        >
-          Sitemap
-        </a>
         <div className="text-xs text-slate-500 dark:text-slate-400">
           {m.footer_powered_by()}{" "}
           <a

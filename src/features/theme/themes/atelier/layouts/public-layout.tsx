@@ -1,11 +1,9 @@
 import { useRouteContext } from "@tanstack/react-router";
-import { useState } from "react";
 import type { PublicLayoutProps } from "@/features/theme/contract/layouts";
 import { BackToTop } from "../components/control/back-to-top";
 import { FloatingMusicPlayer } from "../components/music/floating-music-player";
 import { MusicProvider } from "../components/music/music-provider";
 import { Footer } from "./footer";
-import { MobileMenu } from "./mobile-menu";
 import { Navbar } from "./navbar";
 
 export function PublicLayout({
@@ -13,10 +11,8 @@ export function PublicLayout({
   navOptions,
   user,
   isSessionLoading,
-  logout,
 }: PublicLayoutProps) {
   const { siteConfig } = useRouteContext({ from: "__root__" });
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const backgroundImage =
     siteConfig.theme.atelier.backgroundImages[0] ||
     siteConfig.theme.atelier.homeBg;
@@ -41,19 +37,10 @@ export function PublicLayout({
           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(99,102,241,0.28),rgba(236,72,153,0.18),rgba(14,165,233,0.2))] opacity-70 dark:opacity-35" />
         </div>
 
-        <MobileMenu
-          navOptions={navOptions}
-          isOpen={isMenuOpen}
-          onClose={() => setIsMenuOpen(false)}
-          user={user}
-          logout={logout}
-        />
-
         <div className="sticky top-0 z-50 pointer-events-none">
           <div className="pointer-events-auto max-w-(--atelier-page-width) mx-auto px-0 md:px-4">
             <Navbar
               navOptions={navOptions}
-              onMenuClick={() => setIsMenuOpen(true)}
               user={user}
               isLoading={isSessionLoading}
               bannerHeightVh={0}
