@@ -7,9 +7,12 @@ import {
   useRef,
   useState,
 } from "react";
+import { getMusicPlaylistConfigFn } from "@/features/music/api/music.public.api";
 
-const DEFAULT_MUSIC_IDS = ["707720"];
-const MUSIC_CACHE_KEY = `atelier:music:v2:${DEFAULT_MUSIC_IDS.join(",")}`;
+const DEFAULT_MUSIC_PLAYLIST: Array<MusicPlaylistConfigItem> = [
+  { id: "707720", source: "netease", enabled: true },
+];
+const MUSIC_CACHE_KEY_PREFIX = "atelier:music:v4";
 const MUSIC_CACHE_TTL = 1000 * 60 * 60 * 24;
 const LOCAL_MUSIC_LYRICS_URL = "/music/butterfly-luo-tianyi.lrc";
 
@@ -30,6 +33,17 @@ interface RawSong {
   url?: string;
   lrc?: string;
   error?: string;
+}
+
+interface MusicPlaylistConfigItem {
+  id: string;
+  source?: "netease" | "custom";
+  title?: string;
+  artist?: string;
+  cover?: string;
+  src?: string;
+  lrc?: string;
+  enabled?: boolean;
 }
 
 export interface MusicSong {
@@ -132,6 +146,65 @@ function normalizeSong(song: RawSong): MusicSong | null {
   };
 }
 
+function normalizeConfiguredSong(item: MusicPlaylistConfigItem) {
+  if (!item.src) return null;
+
+  return {
+    id: item.id,
+    title: item.title || item.id,
+    artist: item.artist || "Unknown Artist",
+    cover: item.cover || "/images/avatar.png",
+    src: item.src,
+    lyrics: parseLrc(item.lrc),
+  } satisfies MusicSong;
+}
+
+function mergeSongConfig(
+  rawSong: RawSong | undefined,
+  item: MusicPlaylistConfigItem,
+) {
+  if (!rawSong || rawSong.error) {
+    return normalizeConfiguredSong(item);
+  }
+
+  return normalizeSong({
+    ...rawSong,
+    name: item.title || rawSong.name,
+    artist: item.artist || rawSong.artist,
+    cover: item.cover || rawSong.cover,
+    pic: item.cover || rawSong.pic,
+    url: item.src || rawSong.url,
+    lrc: item.lrc || rawSong.lrc,
+  });
+}
+
+function hashString(value: string) {
+  let hash = 0;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(index);
+    hash |= 0;
+  }
+
+  return Math.abs(hash).toString(36);
+}
+
+function getMusicCacheKey(items: Array<MusicPlaylistConfigItem>) {
+  return `${MUSIC_CACHE_KEY_PREFIX}:${hashString(JSON.stringify(items))}`;
+}
+
+async function getConfiguredPlaylist() {
+  try {
+    const playlist = await getMusicPlaylistConfigFn();
+    const enabledPlaylist = playlist.filter((item) => item.enabled !== false);
+    return enabledPlaylist.length > 0
+      ? enabledPlaylist
+      : DEFAULT_MUSIC_PLAYLIST;
+  } catch {
+    return DEFAULT_MUSIC_PLAYLIST;
+  }
+}
+
 function readLocalCache<T>(key: string, ttl: number): T | null {
   if (typeof window === "undefined") return null;
 
@@ -202,8 +275,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     async function fetchMusic() {
       try {
+        const configuredPlaylist = await getConfiguredPlaylist();
+        const cacheKey = getMusicCacheKey(configuredPlaylist);
         const cached = readLocalCache<Array<MusicSong>>(
-          MUSIC_CACHE_KEY,
+          cacheKey,
           MUSIC_CACHE_TTL,
         );
 
@@ -217,17 +292,30 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const response = await fetch(
-          `/api/music?ids=${DEFAULT_MUSIC_IDS.join(",")}`,
-        );
-        const rawSongs = (await response.json()) as Array<RawSong>;
-        const songs = rawSongs
-          .map((song) => normalizeSong(song))
+        const neteaseIds = configuredPlaylist
+          .filter((item) => (item.source ?? "netease") === "netease")
+          .map((item) => item.id)
+          .filter(Boolean);
+        const rawSongs =
+          neteaseIds.length > 0
+            ? (((await (
+                await fetch(`/api/music?ids=${neteaseIds.join(",")}`)
+              ).json()) as Array<RawSong>) ?? [])
+            : [];
+        const rawSongById = new Map(rawSongs.map((song) => [song.id, song]));
+        const songs = configuredPlaylist
+          .map((item) => {
+            if ((item.source ?? "netease") === "custom") {
+              return normalizeConfiguredSong(item);
+            }
+
+            return mergeSongConfig(rawSongById.get(item.id), item);
+          })
           .filter((song): song is MusicSong => song !== null);
 
         if (!isMounted) return;
 
-        writeLocalCache(MUSIC_CACHE_KEY, songs);
+        writeLocalCache(cacheKey, songs);
         setPlaylist((currentPlaylist) =>
           withLocalMusic(songs, getLocalMusicSong(currentPlaylist)),
         );

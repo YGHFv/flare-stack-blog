@@ -7,6 +7,7 @@ import {
   Link2,
   LogOut,
   MessageSquare,
+  Music2,
   Tag,
   User,
   X,
@@ -72,6 +73,12 @@ export function SideBar({
       icon: LayoutDashboard,
       label: m.admin_sidebar_dashboard(),
       exact: true,
+    },
+    {
+      path: "/admin/music",
+      icon: Music2,
+      label: "音乐管理",
+      exact: false,
     },
     {
       path: "/admin/posts",

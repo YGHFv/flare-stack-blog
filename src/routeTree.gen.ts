@@ -32,6 +32,7 @@ import { Route as AdminPostsRouteRouteImport } from './routes/admin/posts/route'
 import { Route as AdminTagsIndexRouteImport } from './routes/admin/tags/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as AdminPostsIndexRouteImport } from './routes/admin/posts/index'
+import { Route as AdminMusicIndexRouteImport } from './routes/admin/music/index'
 import { Route as AdminMediaIndexRouteImport } from './routes/admin/media/index'
 import { Route as AdminFriendLinksIndexRouteImport } from './routes/admin/friend-links/index'
 import { Route as AdminCommentsIndexRouteImport } from './routes/admin/comments/index'
@@ -150,6 +151,11 @@ const AdminPostsIndexRoute = AdminPostsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminPostsRouteRoute,
 } as any)
+const AdminMusicIndexRoute = AdminMusicIndexRouteImport.update({
+  id: '/music/',
+  path: '/music/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminMediaIndexRoute = AdminMediaIndexRouteImport.update({
   id: '/media/',
   path: '/media/',
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/admin/comments/': typeof AdminCommentsIndexRoute
   '/admin/friend-links/': typeof AdminFriendLinksIndexRoute
   '/admin/media/': typeof AdminMediaIndexRoute
+  '/admin/music/': typeof AdminMusicIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/admin/tags/': typeof AdminTagsIndexRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/admin/comments': typeof AdminCommentsIndexRoute
   '/admin/friend-links': typeof AdminFriendLinksIndexRoute
   '/admin/media': typeof AdminMediaIndexRoute
+  '/admin/music': typeof AdminMusicIndexRoute
   '/admin/posts': typeof AdminPostsIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/admin/tags': typeof AdminTagsIndexRoute
@@ -254,6 +262,7 @@ export interface FileRoutesById {
   '/admin/comments/': typeof AdminCommentsIndexRoute
   '/admin/friend-links/': typeof AdminFriendLinksIndexRoute
   '/admin/media/': typeof AdminMediaIndexRoute
+  '/admin/music/': typeof AdminMusicIndexRoute
   '/admin/posts/': typeof AdminPostsIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/admin/tags/': typeof AdminTagsIndexRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/admin/comments/'
     | '/admin/friend-links/'
     | '/admin/media/'
+    | '/admin/music/'
     | '/admin/posts/'
     | '/admin/settings/'
     | '/admin/tags/'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/admin/comments'
     | '/admin/friend-links'
     | '/admin/media'
+    | '/admin/music'
     | '/admin/posts'
     | '/admin/settings'
     | '/admin/tags'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/admin/comments/'
     | '/admin/friend-links/'
     | '/admin/media/'
+    | '/admin/music/'
     | '/admin/posts/'
     | '/admin/settings/'
     | '/admin/tags/'
@@ -515,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPostsIndexRouteImport
       parentRoute: typeof AdminPostsRouteRoute
     }
+    '/admin/music/': {
+      id: '/admin/music/'
+      path: '/music'
+      fullPath: '/admin/music/'
+      preLoaderRoute: typeof AdminMusicIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/media/': {
       id: '/admin/media/'
       path: '/media'
@@ -631,6 +650,7 @@ interface AdminRouteRouteChildren {
   AdminCommentsIndexRoute: typeof AdminCommentsIndexRoute
   AdminFriendLinksIndexRoute: typeof AdminFriendLinksIndexRoute
   AdminMediaIndexRoute: typeof AdminMediaIndexRoute
+  AdminMusicIndexRoute: typeof AdminMusicIndexRoute
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
   AdminTagsIndexRoute: typeof AdminTagsIndexRoute
 }
@@ -641,6 +661,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminCommentsIndexRoute: AdminCommentsIndexRoute,
   AdminFriendLinksIndexRoute: AdminFriendLinksIndexRoute,
   AdminMediaIndexRoute: AdminMediaIndexRoute,
+  AdminMusicIndexRoute: AdminMusicIndexRoute,
   AdminSettingsIndexRoute: AdminSettingsIndexRoute,
   AdminTagsIndexRoute: AdminTagsIndexRoute,
 }

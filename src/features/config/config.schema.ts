@@ -8,6 +8,21 @@ import {
 import { webhookEndpointSchema } from "@/features/webhook/webhook.schema";
 import type { Messages } from "@/lib/i18n";
 
+export const MusicPlaylistItemSchema = z.object({
+  id: z.string().trim().min(1).max(120),
+  source: z.enum(["netease", "custom"]).optional(),
+  title: z.string().trim().max(120).optional(),
+  artist: z.string().trim().max(120).optional(),
+  cover: z.string().trim().max(500).optional(),
+  src: z.string().trim().max(500).optional(),
+  lrc: z.string().max(30000).optional(),
+  enabled: z.boolean().optional(),
+});
+
+export const MusicConfigSchema = z.object({
+  playlist: z.array(MusicPlaylistItemSchema).max(50).optional(),
+});
+
 export const SystemConfigSchema = z.object({
   email: z
     .object({
@@ -40,6 +55,7 @@ export const SystemConfigSchema = z.object({
       webhooks: z.array(webhookEndpointSchema).optional(),
     })
     .optional(),
+  music: MusicConfigSchema.optional(),
   site: SiteConfigInputSchema.optional(),
 });
 
@@ -47,6 +63,7 @@ export const createSystemConfigFormSchema = (messages: Messages) =>
   z.object({
     email: SystemConfigSchema.shape.email,
     notification: SystemConfigSchema.shape.notification,
+    music: SystemConfigSchema.shape.music,
     site: createSiteConfigInputFormSchema(messages).optional(),
   });
 
@@ -76,6 +93,15 @@ export const DEFAULT_CONFIG: SystemConfig = {
       emailEnabled: true,
     },
     webhooks: [],
+  },
+  music: {
+    playlist: [
+      {
+        id: "707720",
+        source: "netease",
+        enabled: true,
+      },
+    ],
   },
   site: blogConfig satisfies SiteConfigInput,
 };

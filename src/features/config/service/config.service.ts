@@ -73,6 +73,11 @@ export function resolveSystemConfig(
       webhooks:
         config?.notification?.webhooks ?? DEFAULT_CONFIG.notification?.webhooks,
     },
+    music: {
+      ...DEFAULT_CONFIG.music,
+      ...config?.music,
+      playlist: config?.music?.playlist ?? DEFAULT_CONFIG.music?.playlist,
+    },
     site: resolveSiteConfig(config),
   };
 }
@@ -276,6 +281,13 @@ export async function getSiteConfig(
 ) {
   const config = await getSystemConfig(context);
   return resolveSiteConfig(config);
+}
+
+export async function getMusicPlaylistConfig(
+  context: DbContext & { executionCtx: ExecutionContext },
+) {
+  const config = await getSystemConfig(context);
+  return config.music?.playlist ?? DEFAULT_CONFIG.music?.playlist ?? [];
 }
 
 export async function updateSystemConfig(
