@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import theme from "@theme";
+import { createElement } from "react";
 import { ThemeProvider } from "@/components/common/theme-provider";
 import { siteConfigQuery } from "@/features/config/queries";
 import TanStackQueryDevtools from "@/integrations/tanstack-query/devtools";
@@ -116,7 +117,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const { siteConfig } = useRouteContext({ from: "__root__" });
   const env = clientEnv();
   const shouldShowDevtools = env.VITE_ENABLE_DEVTOOLS === "true";
-  const routerDevtoolsPanel = <TanStackRouterDevtoolsPanel />;
+  const devtools = shouldShowDevtools
+    ? createElement(TanStackDevtools, {
+        config: {
+          position: "bottom-right",
+        },
+        plugins: [
+          {
+            name: "Tanstack Router",
+            render: createElement(TanStackRouterDevtoolsPanel),
+          },
+          TanStackQueryDevtools,
+        ],
+      })
+    : null;
 
   return (
     <html
@@ -129,20 +143,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ThemeProvider>{children}</ThemeProvider>
-        {shouldShowDevtools && (
-          <TanStackDevtools
-            config={{
-              position: "bottom-right",
-            }}
-            plugins={[
-              {
-                name: "Tanstack Router",
-                render: routerDevtoolsPanel,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
-        )}
+        {devtools}
         <Scripts />
       </body>
     </html>
