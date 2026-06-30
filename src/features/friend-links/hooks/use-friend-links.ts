@@ -39,13 +39,17 @@ export function useFriendLinks() {
 
 export function useAdminFriendLinks() {
   const queryClient = useQueryClient();
+  const invalidateFriendLinks = () => {
+    queryClient.invalidateQueries({ queryKey: FRIEND_LINKS_KEYS.all });
+    queryClient.invalidateQueries({ queryKey: FRIEND_LINKS_KEYS.approved });
+  };
 
   const createMutation = useMutation({
     mutationFn: async (input: Parameters<typeof createFriendLinkFn>[0]) => {
       return await createFriendLinkFn(input);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: FRIEND_LINKS_KEYS.all });
+      invalidateFriendLinks();
       toast.success(m.friend_links_toast_create_success());
     },
   });
@@ -60,7 +64,7 @@ export function useAdminFriendLinks() {
         return;
       }
 
-      queryClient.invalidateQueries({ queryKey: FRIEND_LINKS_KEYS.all });
+      invalidateFriendLinks();
       toast.success(m.friend_links_toast_update_success());
     },
   });
@@ -75,7 +79,7 @@ export function useAdminFriendLinks() {
         return;
       }
 
-      queryClient.invalidateQueries({ queryKey: FRIEND_LINKS_KEYS.all });
+      invalidateFriendLinks();
       toast.success(m.friend_links_toast_approve_success());
     },
   });
@@ -90,7 +94,7 @@ export function useAdminFriendLinks() {
         return;
       }
 
-      queryClient.invalidateQueries({ queryKey: FRIEND_LINKS_KEYS.all });
+      invalidateFriendLinks();
       toast.success(m.friend_links_toast_reject_success());
     },
   });
@@ -105,7 +109,7 @@ export function useAdminFriendLinks() {
         return;
       }
 
-      queryClient.invalidateQueries({ queryKey: FRIEND_LINKS_KEYS.all });
+      invalidateFriendLinks();
       toast.success(m.friend_links_toast_delete_success());
     },
   });

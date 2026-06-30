@@ -167,7 +167,9 @@ export async function bumpVersion(
     ),
   );
 
-  let next = 1;
+  // getVersion() falls back to "v1" when no version exists, so the first
+  // explicit invalidation must advance past that implicit cache bucket.
+  let next = 2;
   if (current) {
     const parsed = Number.parseInt(current);
     if (!Number.isNaN(parsed)) {

@@ -157,7 +157,7 @@ export const ApprovedFriendLinksResponseSchema = z.array(
 
 export const FRIEND_LINKS_CACHE_KEYS = {
   approvedList: (version: string) =>
-    ["friend-links", "approved", version] as const,
+    ["friend-links", "approved-list", version] as const,
 } as const;
 
 // === Types ===
