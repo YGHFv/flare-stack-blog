@@ -116,6 +116,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const { siteConfig } = useRouteContext({ from: "__root__" });
   const env = clientEnv();
   const shouldShowDevtools = env.VITE_ENABLE_DEVTOOLS === "true";
+  const routerDevtoolsPanel = <TanStackRouterDevtoolsPanel />;
 
   return (
     <html
@@ -136,7 +137,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             plugins={[
               {
                 name: "Tanstack Router",
-                render: <TanStackRouterDevtoolsPanel />,
+                render: routerDevtoolsPanel,
               },
               TanStackQueryDevtools,
             ]}
