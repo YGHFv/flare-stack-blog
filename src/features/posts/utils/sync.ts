@@ -4,6 +4,7 @@ export async function calculatePostHash(post: {
   title: string;
   contentJson: JSONContent | null;
   summary: string | null;
+  coverImage?: string | null;
   tagIds: Array<number>;
   slug: string;
   publishedAt: Date | string | null;
@@ -17,6 +18,7 @@ export async function calculatePostHash(post: {
     title: post.title,
     contentJson: post.contentJson,
     summary: post.summary,
+    coverImage: post.coverImage ?? null,
     tagIds: [...post.tagIds].sort(),
     slug: post.slug,
     publishedAt: toISOOrNull(post.publishedAt),

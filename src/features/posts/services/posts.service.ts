@@ -44,6 +44,20 @@ function stripPublicContentJson<T extends { publicContentJson?: unknown }>(
   return rest;
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function normalizeTagNames(data: GetPostsCursorInput) {
+  return [
+    ...new Set(
+      [...(data.tagNames ?? []), data.tagName]
+        .filter(isNonEmptyString)
+        .map((tagName) => tagName.trim()),
+    ),
+  ].sort();
+}
+
 export async function getPinnedPosts(
   context: DbContext & { executionCtx: ExecutionContext },
 ) {
@@ -61,12 +75,14 @@ export async function getPostsCursor(
   context: DbContext & { executionCtx: ExecutionContext },
   data: GetPostsCursorInput,
 ) {
+  const tagNames = normalizeTagNames(data);
   const fetcher = async () =>
     await PostRepo.getPostsCursor(context.db, {
       cursor: data.cursor,
       limit: data.limit,
       publicOnly: true,
-      tagName: data.tagName,
+      search: data.search,
+      tagNames,
       excludePinned: data.excludePinned,
     });
 
@@ -75,7 +91,8 @@ export async function getPostsCursor(
     version,
     data.limit ?? 10,
     data.cursor ?? 0,
-    data.tagName ?? "all",
+    tagNames.length > 0 ? tagNames.join("|") : "all",
+    data.search?.trim() || "all",
   );
 
   return await CacheService.get(
@@ -316,6 +333,7 @@ export async function findPostById(
       title: post.title,
       contentJson: post.contentJson,
       summary: post.summary,
+      coverImage: post.coverImage,
       tagIds: post.tags.map((t) => t.id),
       slug: post.slug,
       publishedAt: post.publishedAt,
@@ -414,6 +432,7 @@ export async function startPostProcessWorkflow(
         title: post.title,
         contentJson: post.contentJson,
         summary: post.summary,
+        coverImage: post.coverImage,
         tagIds: post.tags.map((tag) => tag.id),
         slug: post.slug,
         publishedAt: post.publishedAt,
@@ -428,6 +447,7 @@ export async function startPostProcessWorkflow(
         snapshotJson: {
           title: post.title,
           summary: post.summary,
+          coverImage: post.coverImage,
           slug: post.slug,
           status: post.status,
           publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,

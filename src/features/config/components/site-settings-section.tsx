@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AssetUploadField } from "@/features/config/components/asset-upload-field";
 import { Field } from "@/features/config/components/site-settings-fields";
 import { SocialLinksEditor } from "@/features/config/components/social-links-editor";
+import { AtelierThemeSettings } from "@/features/config/components/themes/atelier-theme-settings";
 import { DefaultThemeSettings } from "@/features/config/components/themes/default-theme-settings";
 import { FuwariThemeSettings } from "@/features/config/components/themes/fuwari-theme-settings";
 import type { SystemConfig } from "@/features/config/config.schema";
@@ -15,6 +16,8 @@ function ThemeSettingsContent() {
       return <DefaultThemeSettings />;
     case "fuwari":
       return <FuwariThemeSettings />;
+    case "atelier":
+      return <AtelierThemeSettings />;
     default: {
       __THEME_NAME__ satisfies never;
       return null;

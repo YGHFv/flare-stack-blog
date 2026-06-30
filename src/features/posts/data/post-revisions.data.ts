@@ -133,6 +133,7 @@ export async function restorePostSnapshot(
       .set({
         title: data.snapshot.title,
         summary: data.snapshot.summary,
+        coverImage: data.snapshot.coverImage ?? null,
         slug: data.snapshot.slug,
         status: data.snapshot.status,
         publishedAt: data.snapshot.publishedAt

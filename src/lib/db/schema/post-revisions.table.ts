@@ -14,6 +14,7 @@ export const POST_REVISION_REASONS = [
 export interface PostRevisionSnapshot {
   title: string;
   summary: string | null;
+  coverImage?: string | null;
   slug: string;
   status: PostStatus;
   publishedAt: string | null;

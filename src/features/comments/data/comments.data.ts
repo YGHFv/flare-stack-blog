@@ -1,8 +1,16 @@
 import { and, count, desc, eq, like, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
-import { buildCommentWhereClause } from "@/features/comments/data/helper";
+import {
+  buildCommentWhereClause,
+  buildMusicCommentWhereClause,
+} from "@/features/comments/data/helper";
 import type { CommentStatus } from "@/lib/db/schema";
-import { CommentsTable, PostsTable, user } from "@/lib/db/schema";
+import {
+  CommentsTable,
+  MusicCommentsTable,
+  PostsTable,
+  user,
+} from "@/lib/db/schema";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -17,6 +25,23 @@ export async function insertComment(
 export async function findCommentById(db: DB, id: number) {
   return await db.query.CommentsTable.findFirst({
     where: eq(CommentsTable.id, id),
+  });
+}
+
+export async function insertMusicComment(
+  db: DB,
+  data: typeof MusicCommentsTable.$inferInsert,
+) {
+  const [comment] = await db
+    .insert(MusicCommentsTable)
+    .values(data)
+    .returning();
+  return comment;
+}
+
+export async function findMusicCommentById(db: DB, id: number) {
+  return await db.query.MusicCommentsTable.findFirst({
+    where: eq(MusicCommentsTable.id, id),
   });
 }
 
@@ -227,6 +252,211 @@ export async function getRepliesByRootIdCount(
   return result[0].count;
 }
 
+export async function getRootMusicCommentsBySongId(
+  db: DB,
+  songId: string,
+  options: {
+    offset?: number;
+    limit?: number;
+    status?: CommentStatus | Array<CommentStatus>;
+    viewerId?: string;
+  } = {},
+) {
+  const { offset = 0, limit = DEFAULT_PAGE_SIZE, status, viewerId } = options;
+
+  const conditions = buildMusicCommentWhereClause({
+    songId,
+    status,
+    viewerId,
+    rootOnly: true,
+  });
+
+  const comments = await db
+    .select({
+      id: MusicCommentsTable.id,
+      content: MusicCommentsTable.content,
+      rootId: MusicCommentsTable.rootId,
+      replyToCommentId: MusicCommentsTable.replyToCommentId,
+      songId: MusicCommentsTable.songId,
+      userId: MusicCommentsTable.userId,
+      status: MusicCommentsTable.status,
+      aiReason: MusicCommentsTable.aiReason,
+      createdAt: MusicCommentsTable.createdAt,
+      updatedAt: MusicCommentsTable.updatedAt,
+      user: {
+        id: user.id,
+        name: user.name,
+        image: user.image,
+        role: user.role,
+      },
+    })
+    .from(MusicCommentsTable)
+    .leftJoin(user, eq(MusicCommentsTable.userId, user.id))
+    .where(conditions)
+    .orderBy(desc(MusicCommentsTable.createdAt))
+    .limit(Math.min(limit, 100))
+    .offset(offset);
+
+  return comments;
+}
+
+export async function getRootMusicCommentsBySongIdCount(
+  db: DB,
+  songId: string,
+  options: {
+    status?: CommentStatus | Array<CommentStatus>;
+    viewerId?: string;
+  } = {},
+) {
+  const { status, viewerId } = options;
+
+  const conditions = buildMusicCommentWhereClause({
+    songId,
+    status,
+    viewerId,
+    rootOnly: true,
+  });
+
+  const result = await db
+    .select({ count: count() })
+    .from(MusicCommentsTable)
+    .where(conditions);
+
+  return result[0].count;
+}
+
+export async function getMusicReplyCountByRootId(
+  db: DB,
+  songId: string,
+  rootId: number,
+  options: {
+    status?: CommentStatus | Array<CommentStatus>;
+    viewerId?: string;
+  } = {},
+) {
+  const { status, viewerId } = options;
+
+  const conditions = buildMusicCommentWhereClause({
+    songId,
+    rootId,
+    status,
+    viewerId,
+  });
+
+  const result = await db
+    .select({ count: count() })
+    .from(MusicCommentsTable)
+    .where(conditions);
+
+  return result[0].count;
+}
+
+export async function getMusicRepliesByRootId(
+  db: DB,
+  songId: string,
+  rootId: number,
+  options: {
+    offset?: number;
+    limit?: number;
+    status?: CommentStatus | Array<CommentStatus>;
+    viewerId?: string;
+  } = {},
+) {
+  const { offset = 0, limit = DEFAULT_PAGE_SIZE, status, viewerId } = options;
+
+  const conditions = buildMusicCommentWhereClause({
+    songId,
+    rootId,
+    status,
+    viewerId,
+  });
+
+  const replies = await db
+    .select({
+      id: MusicCommentsTable.id,
+      content: MusicCommentsTable.content,
+      rootId: MusicCommentsTable.rootId,
+      replyToCommentId: MusicCommentsTable.replyToCommentId,
+      songId: MusicCommentsTable.songId,
+      userId: MusicCommentsTable.userId,
+      status: MusicCommentsTable.status,
+      aiReason: MusicCommentsTable.aiReason,
+      createdAt: MusicCommentsTable.createdAt,
+      updatedAt: MusicCommentsTable.updatedAt,
+      user: {
+        id: user.id,
+        name: user.name,
+        image: user.image,
+        role: user.role,
+      },
+    })
+    .from(MusicCommentsTable)
+    .leftJoin(user, eq(MusicCommentsTable.userId, user.id))
+    .where(conditions)
+    .orderBy(MusicCommentsTable.createdAt)
+    .limit(Math.min(limit, 100))
+    .offset(offset);
+
+  const repliesWithReplyTo = await Promise.all(
+    replies.map(async (reply) => {
+      if (!reply.replyToCommentId) {
+        return { ...reply, replyTo: null };
+      }
+
+      const replyToComment = await findMusicCommentById(
+        db,
+        reply.replyToCommentId,
+      );
+      if (!replyToComment?.userId) {
+        return { ...reply, replyTo: null };
+      }
+
+      const replyToUserInfo = await db.query.user.findFirst({
+        where: eq(user.id, replyToComment.userId),
+        columns: {
+          id: true,
+          name: true,
+        },
+      });
+
+      return {
+        ...reply,
+        replyTo: replyToUserInfo
+          ? { id: replyToUserInfo.id, name: replyToUserInfo.name }
+          : null,
+      };
+    }),
+  );
+
+  return repliesWithReplyTo;
+}
+
+export async function getMusicRepliesByRootIdCount(
+  db: DB,
+  songId: string,
+  rootId: number,
+  options: {
+    status?: CommentStatus | Array<CommentStatus>;
+    viewerId?: string;
+  } = {},
+) {
+  const { status, viewerId } = options;
+
+  const conditions = buildMusicCommentWhereClause({
+    songId,
+    rootId,
+    status,
+    viewerId,
+  });
+
+  const result = await db
+    .select({ count: count() })
+    .from(MusicCommentsTable)
+    .where(conditions);
+
+  return result[0].count;
+}
+
 export async function getCommentsByUserId(
   db: DB,
   userId: string,
@@ -358,6 +588,21 @@ export async function updateComment(
     .update(CommentsTable)
     .set(data)
     .where(eq(CommentsTable.id, id))
+    .returning();
+  return comment;
+}
+
+export async function updateMusicComment(
+  db: DB,
+  id: number,
+  data: Partial<
+    Omit<typeof MusicCommentsTable.$inferInsert, "id" | "createdAt">
+  >,
+) {
+  const [comment] = await db
+    .update(MusicCommentsTable)
+    .set(data)
+    .where(eq(MusicCommentsTable.id, id))
     .returning();
   return comment;
 }

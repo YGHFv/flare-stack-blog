@@ -1,8 +1,10 @@
 import type {
   CreateCommentInput,
+  CreateMusicCommentInput,
   DeleteCommentInput,
   GetAllCommentsInput,
   GetCommentsByPostIdInput,
+  GetMusicCommentsBySongIdInput,
   GetMyCommentsInput,
   ModerateCommentInput,
   StartCommentModerationInput,
@@ -70,6 +72,68 @@ export async function getRepliesByRootId(
       viewerId: data.viewerId,
       status: data.viewerId ? undefined : ["published", "deleted"],
     }),
+  ]);
+
+  return { items, total };
+}
+
+export async function getRootMusicCommentsBySongId(
+  context: DbContext,
+  data: GetMusicCommentsBySongIdInput & { viewerId?: string },
+) {
+  const [items, total] = await Promise.all([
+    CommentRepo.getRootMusicCommentsBySongId(context.db, data.songId, {
+      offset: data.offset,
+      limit: data.limit,
+      viewerId: data.viewerId,
+      status: data.viewerId ? undefined : ["published", "deleted"],
+    }),
+    CommentRepo.getRootMusicCommentsBySongIdCount(context.db, data.songId, {
+      viewerId: data.viewerId,
+      status: data.viewerId ? undefined : ["published", "deleted"],
+    }),
+  ]);
+
+  const itemsWithReplyCount = await Promise.all(
+    items.map(async (item) => {
+      const replyCount = await CommentRepo.getMusicReplyCountByRootId(
+        context.db,
+        data.songId,
+        item.id,
+        {
+          viewerId: data.viewerId,
+          status: data.viewerId ? undefined : ["published", "deleted"],
+        },
+      );
+      return { ...item, replyCount };
+    }),
+  );
+
+  return { items: itemsWithReplyCount, total };
+}
+
+export async function getMusicRepliesByRootId(
+  context: DbContext,
+  data: { songId: string; rootId: number; offset?: number; limit?: number } & {
+    viewerId?: string;
+  },
+) {
+  const [items, total] = await Promise.all([
+    CommentRepo.getMusicRepliesByRootId(context.db, data.songId, data.rootId, {
+      offset: data.offset,
+      limit: data.limit,
+      viewerId: data.viewerId,
+      status: data.viewerId ? undefined : ["published", "deleted"],
+    }),
+    CommentRepo.getMusicRepliesByRootIdCount(
+      context.db,
+      data.songId,
+      data.rootId,
+      {
+        viewerId: data.viewerId,
+        status: data.viewerId ? undefined : ["published", "deleted"],
+      },
+    ),
   ]);
 
   return { items, total };
@@ -190,6 +254,61 @@ export async function createComment(
   return ok(comment);
 }
 
+export async function createMusicComment(
+  context: AuthContext,
+  data: CreateMusicCommentInput,
+) {
+  let rootId: number | null = null;
+  let replyToCommentId: number | null = null;
+
+  if (data.rootId) {
+    const rootComment = await CommentRepo.findMusicCommentById(
+      context.db,
+      data.rootId,
+    );
+    if (!rootComment) {
+      return err({ reason: "ROOT_COMMENT_NOT_FOUND" });
+    }
+    if (rootComment.rootId !== null) {
+      return err({ reason: "INVALID_ROOT_ID" });
+    }
+    if (rootComment.songId !== data.songId) {
+      return err({ reason: "ROOT_COMMENT_POST_MISMATCH" });
+    }
+    rootId = data.rootId;
+
+    if (data.replyToCommentId) {
+      const replyToComment = await CommentRepo.findMusicCommentById(
+        context.db,
+        data.replyToCommentId,
+      );
+      if (!replyToComment) {
+        return err({ reason: "REPLY_TO_COMMENT_NOT_FOUND" });
+      }
+      const actualRootId = replyToComment.rootId ?? replyToComment.id;
+      if (actualRootId !== rootId) {
+        return err({ reason: "REPLY_TO_COMMENT_ROOT_MISMATCH" });
+      }
+      replyToCommentId = data.replyToCommentId;
+    } else {
+      replyToCommentId = rootId;
+    }
+  } else if (data.replyToCommentId) {
+    return err({ reason: "ROOT_COMMENT_CANNOT_HAVE_REPLY_TO" });
+  }
+
+  const comment = await CommentRepo.insertMusicComment(context.db, {
+    songId: data.songId,
+    content: data.content,
+    rootId,
+    replyToCommentId,
+    userId: context.session.user.id,
+    status: "published",
+  });
+
+  return ok(comment);
+}
+
 export async function deleteComment(
   context: AuthContext,
   data: DeleteCommentInput,
@@ -208,6 +327,28 @@ export async function deleteComment(
 
   // Soft delete by setting status to deleted
   await CommentRepo.updateComment(context.db, data.id, {
+    status: "deleted",
+  });
+
+  return ok({ success: true });
+}
+
+export async function deleteMusicComment(
+  context: AuthContext,
+  data: DeleteCommentInput,
+) {
+  const comment = await CommentRepo.findMusicCommentById(context.db, data.id);
+
+  if (!comment) {
+    return err({ reason: "COMMENT_NOT_FOUND" });
+  }
+
+  const userRole = context.session.user.role;
+  if (comment.userId !== context.session.user.id && userRole !== "admin") {
+    return err({ reason: "PERMISSION_DENIED" });
+  }
+
+  await CommentRepo.updateMusicComment(context.db, data.id, {
     status: "deleted",
   });
 

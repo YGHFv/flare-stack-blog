@@ -57,7 +57,13 @@ export function PublicLayout({
           src={siteConfig.theme.fuwari.homeBg}
           alt="banner"
           fetchPriority="high"
-          className="w-full h-full object-cover object-center"
+          className="h-full w-full scale-[1.03] object-cover object-center"
+          style={{
+            filter: "blur(var(--fuwari-bg-blur))",
+            opacity: "var(--fuwari-bg-opacity)",
+            transition:
+              "opacity var(--fuwari-bg-transition) ease, filter var(--fuwari-bg-transition) ease",
+          }}
         />
       </div>
 

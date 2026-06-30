@@ -16,6 +16,7 @@ const coercedDate = z.union([z.date(), z.string().pipe(z.coerce.date())]);
 export const PostRevisionSnapshotSchema = z.object({
   title: z.string(),
   summary: z.string().nullable(),
+  coverImage: z.string().nullable().optional(),
   slug: z.string(),
   status: z.enum(POST_STATUSES),
   publishedAt: z.string().nullable(),

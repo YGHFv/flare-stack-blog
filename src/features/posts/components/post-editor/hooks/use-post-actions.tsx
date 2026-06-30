@@ -90,6 +90,7 @@ export function usePostActions({
       post.slug !== kvSnapshot.slug ||
       post.status !== kvSnapshot.status ||
       post.summary !== kvSnapshot.summary ||
+      post.coverImage !== kvSnapshot.coverImage ||
       post.readTimeInMinutes !== kvSnapshot.readTimeInMinutes ||
       post.publishedAt?.getTime() !== kvSnapshot.publishedAt?.getTime() ||
       post.pinnedAt?.getTime() !== kvSnapshot.pinnedAt?.getTime() ||

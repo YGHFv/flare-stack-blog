@@ -29,6 +29,7 @@ function toRevisionSnapshot(
   return {
     title: post.title,
     summary: post.summary,
+    coverImage: post.coverImage,
     slug: post.slug,
     status: post.status,
     publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
@@ -43,6 +44,7 @@ async function hashSnapshot(snapshot: PostRevisionSnapshot) {
     title: snapshot.title,
     contentJson: snapshot.contentJson,
     summary: snapshot.summary,
+    coverImage: snapshot.coverImage ?? null,
     tagIds: snapshot.tagIds,
     slug: snapshot.slug,
     publishedAt: snapshot.publishedAt,

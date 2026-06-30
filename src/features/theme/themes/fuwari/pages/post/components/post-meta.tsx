@@ -62,7 +62,7 @@ export function PostMeta({ post, className }: PostMetaProps) {
                 )}
                 <Link
                   to="/posts"
-                  search={{ tagName: tag.name }}
+                  search={{ q: undefined, tagNames: [tag.name] }}
                   className="transition fuwari-text-50 text-sm font-medium hover:text-(--fuwari-primary) whitespace-nowrap"
                 >
                   {tag.name}

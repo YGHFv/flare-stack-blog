@@ -1,0 +1,125 @@
+import { Link } from "@tanstack/react-router";
+import { Clock, FileText, Pencil } from "lucide-react";
+import { Suspense } from "react";
+import type { PostPageProps } from "@/features/theme/contract/pages";
+import { AtelierCommentSection } from "@/features/theme/themes/atelier/components/comments/view/comment-section";
+import { ContentRenderer } from "@/features/theme/themes/atelier/components/content/content-renderer";
+import { authClient } from "@/lib/auth/auth.client";
+import { m } from "@/paraglide/messages";
+import { PostMeta } from "./components/post-meta";
+import { PostSummary } from "./components/post-summary";
+import { RelatedPosts, RelatedPostsSkeleton } from "./components/related-posts";
+import TableOfContents from "./components/table-of-contents";
+
+export function PostPage({ post }: PostPageProps) {
+  const { data: session } = authClient.useSession();
+  // Approximate word count
+  const wordCount = post.readTimeInMinutes * 300;
+
+  return (
+    <div className="relative flex flex-col rounded-(--atelier-radius-large) py-1 md:py-0 md:bg-transparent gap-4 mb-4 w-full">
+      {/* Table Of Contents (Desktop Floating Right) */}
+      <div
+        className="hidden 2xl:block absolute top-0 h-full pl-4"
+        style={{
+          right: "calc(var(--atelier-toc-width) * -1)",
+          width: "var(--atelier-toc-width)",
+        }}
+      >
+        <TableOfContents headers={post.toc} />
+      </div>
+
+      {/* Main Post Container */}
+      <div className="atelier-card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full atelier-onload-animation">
+        {/* Word count and reading time */}
+        <div className="flex flex-row flex-wrap atelier-text-30 gap-5 mb-3 transition">
+          <div className="flex flex-row items-center">
+            <div className="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 atelier-text-50 flex items-center justify-center mr-2">
+              <FileText strokeWidth={1.5} size={16} />
+            </div>
+            <div className="text-sm">
+              {m.post_word_count({ count: wordCount })}
+            </div>
+          </div>
+          <div className="flex flex-row items-center">
+            <div className="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 atelier-text-50 flex items-center justify-center mr-2">
+              <Clock strokeWidth={1.5} size={16} />
+            </div>
+            <div className="text-sm">
+              {m.read_time({ count: post.readTimeInMinutes })}
+            </div>
+          </div>
+          {session?.user.role === "admin" && (
+            <Link
+              to="/admin/posts/edit/$id"
+              params={{ id: String(post.id) }}
+              className="flex flex-row items-center atelier-text-30 hover:atelier-text-90 transition animate-in fade-in duration-500"
+            >
+              <div className="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 atelier-text-50 flex items-center justify-center mr-2">
+                <Pencil strokeWidth={1.5} size={16} />
+              </div>
+              <div className="text-sm">{m.post_edit()}</div>
+            </Link>
+          )}
+        </div>
+
+        {/* Title */}
+        <div className="relative">
+          <h1
+            className="transition w-full block font-bold mb-3
+              text-3xl md:text-[2.25rem]/[2.75rem]
+              atelier-text-90
+              md:before:w-1 before:h-5 before:rounded-md before:bg-(--atelier-primary)
+              before:absolute before:top-3 before:-left-4.5"
+            style={{ viewTransitionName: `post-title-${post.slug}` }}
+          >
+            {post.title}
+          </h1>
+        </div>
+
+        {/* Metadata */}
+        <div>
+          <PostMeta post={post} className="mb-5" />
+        </div>
+
+        {/* Summary */}
+        <PostSummary summary={post.summary} />
+
+        {/* Markdown Content */}
+        <div className="mb-6 prose dark:prose-invert prose-base max-w-none! atelier-custom-md">
+          <ContentRenderer content={post.contentJson} />
+        </div>
+
+        {/* End of Content Notice */}
+        <div className="my-8 flex items-center justify-center w-full">
+          <div className="h-px w-full bg-linear-to-r from-transparent via-(--atelier-meta-divider) to-transparent opacity-20" />
+          <span className="mx-4 text-sm font-mono tracking-widest text-(--atelier-meta-divider) opacity-50 whitespace-nowrap">
+            END
+          </span>
+          <div className="h-px w-full bg-linear-to-r from-(--atelier-meta-divider) via-transparent to-transparent opacity-20" />
+        </div>
+      </div>
+
+      {/* Prev/Next buttons (Mock implementation for layout, actual data would come from the server in an ideal setup) */}
+      <div
+        className="hidden flex-col md:flex-row justify-between gap-4 overflow-hidden w-full atelier-onload-animation"
+        style={{ animationDelay: "150ms" }}
+      >
+        {/* Note: the backend schema doesn't currently provide prev/next slugs in PostWithToc. Using placeholder layouts to match Atelier exactly. */}
+      </div>
+
+      {/* Related Posts */}
+      <Suspense fallback={<RelatedPostsSkeleton />}>
+        <RelatedPosts slug={post.slug} />
+      </Suspense>
+
+      {/* Comments Section */}
+      <div
+        className="atelier-card-base p-6 atelier-onload-animation"
+        style={{ animationDelay: "450ms" }}
+      >
+        <AtelierCommentSection postId={post.id} />
+      </div>
+    </div>
+  );
+}

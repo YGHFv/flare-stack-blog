@@ -66,7 +66,7 @@ function SearchRoute() {
 
   const { data: results, isLoading: isSearching } = useQuery({
     ...searchDocsQueryOptions(debouncedQuery, meta?.version || "init"),
-    enabled: debouncedQuery.length > 0 && !!meta?.version,
+    enabled: debouncedQuery.length > 0,
     staleTime: Infinity,
     placeholderData: keepPreviousData,
   });

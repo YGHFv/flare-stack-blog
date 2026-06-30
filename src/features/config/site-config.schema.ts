@@ -224,6 +224,53 @@ function createDefaultThemeBackgroundInputFormSchema(messages: Messages) {
   });
 }
 
+function createThemeBackgroundAppearanceSchema() {
+  return z.object({
+    light: z.object({
+      opacity: createOpacitySchema(),
+    }),
+    dark: z.object({
+      opacity: createOpacitySchema(),
+    }),
+    backdropBlur: createBlurSchema(),
+    transitionDuration: createTransitionDurationSchema(),
+  });
+}
+
+function createThemeBackgroundAppearanceInputSchema() {
+  return z.object({
+    light: z
+      .object({
+        opacity: createOpacitySchema().optional(),
+      })
+      .optional(),
+    dark: z
+      .object({
+        opacity: createOpacitySchema().optional(),
+      })
+      .optional(),
+    backdropBlur: createBlurSchema().optional(),
+    transitionDuration: createTransitionDurationSchema().optional(),
+  });
+}
+
+function createThemeBackgroundAppearanceInputFormSchema(messages: Messages) {
+  return z.object({
+    light: z
+      .object({
+        opacity: createOpacityFormSchema(messages).optional(),
+      })
+      .optional(),
+    dark: z
+      .object({
+        opacity: createOpacityFormSchema(messages).optional(),
+      })
+      .optional(),
+    backdropBlur: createBlurFormSchema(messages).optional(),
+    transitionDuration: createTransitionDurationFormSchema(messages).optional(),
+  });
+}
+
 function createDefaultThemeSiteConfigSchema() {
   return z.object({
     navBarName: createSiteTextSchema(60),
@@ -251,6 +298,7 @@ function createFuwariThemeSiteConfigSchema() {
     homeBg: createBackgroundImageRefSchema(),
     avatar: createAssetRefSchema(),
     primaryHue: createHueSchema(),
+    background: createThemeBackgroundAppearanceSchema(),
   });
 }
 
@@ -259,6 +307,7 @@ function createFuwariThemeSiteConfigInputSchema() {
     homeBg: createBackgroundImageRefSchema().optional(),
     avatar: createAssetRefSchema().optional(),
     primaryHue: createHueSchema().optional(),
+    background: createThemeBackgroundAppearanceInputSchema().optional(),
   });
 }
 
@@ -267,6 +316,41 @@ function createFuwariThemeSiteConfigInputFormSchema(messages: Messages) {
     homeBg: createBackgroundImageRefFormSchema(messages).optional(),
     avatar: createAssetRefFormSchema(messages).optional(),
     primaryHue: createHueFormSchema(messages).optional(),
+    background:
+      createThemeBackgroundAppearanceInputFormSchema(messages).optional(),
+  });
+}
+
+function createAtelierThemeSiteConfigSchema() {
+  return z.object({
+    homeBg: createBackgroundImageRefSchema(),
+    avatar: createAssetRefSchema(),
+    primaryHue: createHueSchema(),
+    backgroundImages: z.array(createBackgroundImageRefSchema()),
+    background: createThemeBackgroundAppearanceSchema(),
+  });
+}
+
+function createAtelierThemeSiteConfigInputSchema() {
+  return z.object({
+    homeBg: createBackgroundImageRefSchema().optional(),
+    avatar: createAssetRefSchema().optional(),
+    primaryHue: createHueSchema().optional(),
+    backgroundImages: z.array(createBackgroundImageRefSchema()).optional(),
+    background: createThemeBackgroundAppearanceInputSchema().optional(),
+  });
+}
+
+function createAtelierThemeSiteConfigInputFormSchema(messages: Messages) {
+  return z.object({
+    homeBg: createBackgroundImageRefFormSchema(messages).optional(),
+    avatar: createAssetRefFormSchema(messages).optional(),
+    primaryHue: createHueFormSchema(messages).optional(),
+    backgroundImages: z
+      .array(createBackgroundImageRefFormSchema(messages))
+      .optional(),
+    background:
+      createThemeBackgroundAppearanceInputFormSchema(messages).optional(),
   });
 }
 
@@ -281,6 +365,10 @@ export const defaultThemeSiteConfigInputSchema =
 export const fuwariThemeSiteConfigSchema = createFuwariThemeSiteConfigSchema();
 export const fuwariThemeSiteConfigInputSchema =
   createFuwariThemeSiteConfigInputSchema();
+export const atelierThemeSiteConfigSchema =
+  createAtelierThemeSiteConfigSchema();
+export const atelierThemeSiteConfigInputSchema =
+  createAtelierThemeSiteConfigInputSchema();
 
 export const FullSiteConfigSchema = z.object({
   title: createSiteTextSchema(120),
@@ -298,6 +386,7 @@ export const FullSiteConfigSchema = z.object({
   theme: z.object({
     default: defaultThemeSiteConfigSchema,
     fuwari: fuwariThemeSiteConfigSchema,
+    atelier: atelierThemeSiteConfigSchema,
   }),
 });
 
@@ -322,6 +411,8 @@ export function createSiteConfigInputFormSchema(messages: Messages) {
         default:
           createDefaultThemeSiteConfigInputFormSchema(messages).optional(),
         fuwari: createFuwariThemeSiteConfigInputFormSchema(messages).optional(),
+        atelier:
+          createAtelierThemeSiteConfigInputFormSchema(messages).optional(),
       })
       .optional(),
   });
@@ -346,6 +437,7 @@ export const SiteConfigInputSchema = z.object({
     .object({
       default: defaultThemeSiteConfigInputSchema.optional(),
       fuwari: fuwariThemeSiteConfigInputSchema.optional(),
+      atelier: atelierThemeSiteConfigInputSchema.optional(),
     })
     .optional(),
 });
@@ -364,6 +456,12 @@ export type DefaultThemeSiteConfigInput = z.infer<
 export type FuwariThemeSiteConfig = z.infer<typeof fuwariThemeSiteConfigSchema>;
 export type FuwariThemeSiteConfigInput = z.infer<
   typeof fuwariThemeSiteConfigInputSchema
+>;
+export type AtelierThemeSiteConfig = z.infer<
+  typeof atelierThemeSiteConfigSchema
+>;
+export type AtelierThemeSiteConfigInput = z.infer<
+  typeof atelierThemeSiteConfigInputSchema
 >;
 export type SiteConfig = z.infer<typeof FullSiteConfigSchema>;
 export type SiteConfigInput = z.infer<typeof SiteConfigInputSchema>;

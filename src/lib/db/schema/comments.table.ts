@@ -58,6 +58,46 @@ export const CommentsTable = sqliteTable(
   ],
 );
 
+export const MusicCommentsTable = sqliteTable(
+  "music_comments",
+  {
+    id,
+    content: text({ mode: "json" }).$type<JSONContent>(),
+    rootId: integer("root_id").references(
+      (): AnySQLiteColumn => MusicCommentsTable.id,
+      {
+        onDelete: "cascade",
+      },
+    ),
+    replyToCommentId: integer("reply_to_comment_id").references(
+      (): AnySQLiteColumn => MusicCommentsTable.id,
+      { onDelete: "set null" },
+    ),
+    status: text("status", { enum: COMMENT_STATUSES })
+      .notNull()
+      .default("published"),
+    aiReason: text("ai_reason"),
+
+    songId: text("song_id").notNull(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    index("music_comments_song_root_created_idx").on(
+      table.songId,
+      table.rootId,
+      table.createdAt,
+    ),
+    index("music_comments_user_created_idx").on(table.userId, table.createdAt),
+    index("music_comments_status_created_idx").on(
+      table.status,
+      table.createdAt,
+    ),
+  ],
+);
+
 export const EMAIL_UNSUBSCRIBE_TYPES = ["reply_notification"] as const;
 
 export const EmailUnsubscriptionsTable = sqliteTable(
@@ -74,6 +114,7 @@ export const EmailUnsubscriptionsTable = sqliteTable(
 
 // ==================== types ====================
 export type Comment = typeof CommentsTable.$inferSelect;
+export type MusicComment = typeof MusicCommentsTable.$inferSelect;
 export type CommentStatus = (typeof COMMENT_STATUSES)[number];
 export type EmailUnsubscription = typeof EmailUnsubscriptionsTable.$inferSelect;
 export type EmailUnsubscribeType = (typeof EMAIL_UNSUBSCRIBE_TYPES)[number];

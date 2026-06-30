@@ -10,8 +10,9 @@ export const INITIAL_TAG_COUNT = 8;
 export function PostsPage({
   posts,
   tags,
-  selectedTag,
+  selectedTags = [],
   onTagClick,
+  onClearTags,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
@@ -20,6 +21,7 @@ export function PostsPage({
   const [isExpanded, setIsExpanded] = useState(false);
   const hasMoreTags = tags.length > INITIAL_TAG_COUNT;
   const visibleTags = isExpanded ? tags : tags.slice(0, INITIAL_TAG_COUNT);
+  const selectedTagSet = new Set(selectedTags);
 
   // Infinite scroll observer
   const observerRef = useRef<HTMLDivElement>(null);
@@ -60,10 +62,10 @@ export function PostsPage({
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <button
-            onClick={() => onTagClick("")}
+            onClick={() => onClearTags?.()}
             className={cn(
               "text-sm font-mono transition-all duration-300 relative group",
-              !selectedTag
+              selectedTags.length === 0
                 ? "text-foreground font-medium"
                 : "text-muted-foreground hover:text-foreground/80",
             )}
@@ -72,36 +74,37 @@ export function PostsPage({
             <span
               className={cn(
                 "absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300",
-                !selectedTag ? "w-full" : "w-0 group-hover:w-full",
+                selectedTags.length === 0 ? "w-full" : "w-0 group-hover:w-full",
               )}
             />
           </button>
 
-          {visibleTags.map((tag) => (
-            <button
-              key={tag.id}
-              onClick={() => onTagClick(tag.name)}
-              className={cn(
-                "text-sm font-mono transition-all duration-300 relative group flex items-baseline gap-1.5",
-                selectedTag === tag.name
-                  ? "text-foreground font-medium"
-                  : "text-muted-foreground hover:text-foreground/80",
-              )}
-            >
-              <span>{tag.name}</span>
-              <span className="text-[10px] opacity-40 group-hover:opacity-70 transition-opacity">
-                {tag.postCount}
-              </span>
-              <span
+          {visibleTags.map((tag) => {
+            const isSelected = selectedTagSet.has(tag.name);
+            return (
+              <button
+                key={tag.id}
+                onClick={() => onTagClick(tag.name)}
                 className={cn(
-                  "absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300",
-                  selectedTag === tag.name
-                    ? "w-full"
-                    : "w-0 group-hover:w-full",
+                  "text-sm font-mono transition-all duration-300 relative group flex items-baseline gap-1.5",
+                  isSelected
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground/80",
                 )}
-              />
-            </button>
-          ))}
+              >
+                <span>{tag.name}</span>
+                <span className="text-[10px] opacity-40 group-hover:opacity-70 transition-opacity">
+                  {tag.postCount}
+                </span>
+                <span
+                  className={cn(
+                    "absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300",
+                    isSelected ? "w-full" : "w-0 group-hover:w-full",
+                  )}
+                />
+              </button>
+            );
+          })}
 
           {hasMoreTags && (
             <button

@@ -38,7 +38,11 @@ export const POSTS_KEYS = {
   revisionDetails: ["posts", "revision-detail"] as const,
 
   // Child keys (functions for specific queries)
-  list: (filters?: { tagName?: string }) => ["posts", "list", filters] as const,
+  list: (filters?: {
+    tagName?: string;
+    tagNames?: Array<string>;
+    search?: string;
+  }) => ["posts", "list", filters] as const,
   detail: (idOrSlug: number | string) => ["posts", "detail", idOrSlug] as const,
   related: (slug: string, limit?: number) =>
     ["posts", "related", slug, limit] as const,
@@ -49,6 +53,10 @@ export const POSTS_KEYS = {
   revisionDetail: (postId: number, revisionId: number) =>
     ["posts", "revision-detail", postId, revisionId] as const,
 };
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
 
 export function recentPostsQuery(limit: number) {
   return queryOptions({
@@ -68,18 +76,37 @@ export function recentPostsQuery(limit: number) {
 }
 
 export function postsInfiniteQueryOptions(
-  filters: { tagName?: string; limit?: number } = {},
+  filters: {
+    tagName?: string;
+    tagNames?: Array<string>;
+    search?: string;
+    limit?: number;
+  } = {},
 ) {
   const pageSize = filters.limit ?? 12;
+  const search = filters.search?.trim() || undefined;
+  const tagNames = [
+    ...new Set(
+      [...(filters.tagNames ?? []), filters.tagName]
+        .filter(isNonEmptyString)
+        .map((tagName) => tagName.trim()),
+    ),
+  ].sort();
   return infiniteQueryOptions({
-    queryKey: POSTS_KEYS.list(filters),
+    queryKey: POSTS_KEYS.list({
+      ...filters,
+      search,
+      tagNames,
+      tagName: undefined,
+    }),
     queryFn: async ({ pageParam }) => {
       if (isSSR) {
         return await getPostsCursorFn({
           data: {
             cursor: pageParam,
             limit: pageSize,
-            tagName: filters.tagName,
+            search,
+            tagNames,
           },
         });
       }
@@ -87,7 +114,8 @@ export function postsInfiniteQueryOptions(
         query: {
           cursor: pageParam?.toString(),
           limit: String(pageSize),
-          tagName: filters.tagName,
+          search,
+          tagNames: tagNames.length > 0 ? tagNames.join(",") : undefined,
         },
       });
       if (!res.ok) throw new Error("Failed to fetch posts");

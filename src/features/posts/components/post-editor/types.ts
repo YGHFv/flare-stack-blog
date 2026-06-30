@@ -4,6 +4,7 @@ import type { PostStatus } from "@/lib/db/schema";
 export interface PostEditorData {
   title: string;
   summary: string;
+  coverImage: string;
   slug: string;
   status: PostStatus;
   readTimeInMinutes: number;
@@ -25,6 +26,7 @@ export type SaveStatus = "SYNCED" | "SAVING" | "PENDING" | "ERROR";
 export const defaultPostData: PostEditorData = {
   title: "",
   summary: "",
+  coverImage: "",
   slug: "",
   status: "draft",
   readTimeInMinutes: 1,

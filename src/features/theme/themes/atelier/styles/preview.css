@@ -1,0 +1,89 @@
+.atelier-preview {
+  --atelier-radius-large: 1rem;
+  --atelier-hue: 250;
+  --atelier-primary: oklch(0.7 0.14 var(--atelier-hue));
+  --atelier-primary-hover: oklch(0.65 0.14 var(--atelier-hue));
+  --atelier-primary-active: oklch(0.6 0.14 var(--atelier-hue));
+  --atelier-page-bg: oklch(0.95 0.01 var(--atelier-hue));
+  --atelier-card-bg: white;
+  --atelier-btn-content: oklch(0.55 0.12 var(--atelier-hue));
+  --atelier-btn-regular-bg: oklch(0.95 0.025 var(--atelier-hue));
+  --atelier-btn-regular-bg-hover: oklch(0.9 0.05 var(--atelier-hue));
+  --atelier-btn-regular-bg-active: oklch(0.85 0.08 var(--atelier-hue));
+  --atelier-btn-plain-bg-hover: oklch(0.95 0.025 var(--atelier-hue));
+  --atelier-btn-plain-bg-active: oklch(0.98 0.01 var(--atelier-hue));
+  --atelier-meta-divider: rgba(0, 0, 0, 0.2);
+}
+
+.dark .atelier-preview {
+  --atelier-primary: oklch(0.75 0.14 var(--atelier-hue));
+  --atelier-primary-hover: oklch(0.8 0.14 var(--atelier-hue));
+  --atelier-primary-active: oklch(0.85 0.14 var(--atelier-hue));
+  --atelier-page-bg: oklch(0.16 0.014 var(--atelier-hue));
+  --atelier-card-bg: oklch(0.23 0.015 var(--atelier-hue));
+  --atelier-btn-content: oklch(0.75 0.1 var(--atelier-hue));
+  --atelier-btn-regular-bg: oklch(0.33 0.035 var(--atelier-hue));
+  --atelier-btn-regular-bg-hover: oklch(0.38 0.04 var(--atelier-hue));
+  --atelier-btn-regular-bg-active: oklch(0.43 0.045 var(--atelier-hue));
+  --atelier-btn-plain-bg-hover: oklch(0.3 0.035 var(--atelier-hue));
+  --atelier-btn-plain-bg-active: oklch(0.27 0.025 var(--atelier-hue));
+  --atelier-meta-divider: rgba(255, 255, 255, 0.2);
+}
+
+.atelier-preview .atelier-card-base {
+  border-radius: var(--atelier-radius-large);
+  overflow: hidden;
+  background-color: var(--atelier-card-bg);
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+
+.atelier-preview .atelier-btn-regular {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--atelier-btn-regular-bg);
+  color: var(--atelier-btn-content);
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    transform 0.2s;
+}
+
+.atelier-preview .atelier-btn-regular:hover {
+  background-color: var(--atelier-btn-regular-bg-hover);
+}
+
+.atelier-preview .atelier-btn-regular:active {
+  background-color: var(--atelier-btn-regular-bg-active);
+}
+
+.dark .atelier-preview .atelier-btn-regular {
+  color: rgb(255 255 255 / 0.75);
+}
+
+.atelier-preview .atelier-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--atelier-primary);
+  color: white;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    opacity 0.2s,
+    transform 0.2s;
+}
+
+.atelier-preview .atelier-btn-primary:hover {
+  background-color: var(--atelier-primary-hover);
+}
+
+.atelier-preview .atelier-btn-primary:active {
+  background-color: var(--atelier-primary-active);
+}
+
+.dark .atelier-preview .atelier-btn-primary {
+  color: rgb(0 0 0 / 0.75);
+}

@@ -4,6 +4,12 @@ import { AssetUploadField } from "@/features/config/components/asset-upload-fiel
 import { RangeField } from "@/features/config/components/site-settings-fields";
 import type { SystemConfig } from "@/features/config/config.schema";
 import {
+  DEFAULT_THEME_BLUR_MAX,
+  DEFAULT_THEME_BLUR_MIN,
+  DEFAULT_THEME_OPACITY_MAX,
+  DEFAULT_THEME_OPACITY_MIN,
+  DEFAULT_THEME_TRANSITION_MAX,
+  DEFAULT_THEME_TRANSITION_MIN,
   FUWARI_THEME_HUE_MAX,
   FUWARI_THEME_HUE_MIN,
 } from "@/features/config/site-config.schema";
@@ -113,6 +119,52 @@ export function FuwariThemeSettings() {
         unit="deg"
         defaultValue={250}
         error={errors.site?.theme?.fuwari?.primaryHue?.message}
+      />
+      <RangeField
+        name="site.theme.fuwari.background.light.opacity"
+        label={m.settings_site_field_light_opacity()}
+        hint={m.settings_site_field_light_opacity_hint()}
+        min={DEFAULT_THEME_OPACITY_MIN}
+        max={DEFAULT_THEME_OPACITY_MAX}
+        step={0.01}
+        defaultValue={0.32}
+        formatValue={(value) => value.toFixed(2)}
+        error={errors.site?.theme?.fuwari?.background?.light?.opacity?.message}
+      />
+      <RangeField
+        name="site.theme.fuwari.background.dark.opacity"
+        label={m.settings_site_field_dark_opacity()}
+        hint={m.settings_site_field_dark_opacity_hint()}
+        min={DEFAULT_THEME_OPACITY_MIN}
+        max={DEFAULT_THEME_OPACITY_MAX}
+        step={0.01}
+        defaultValue={0.22}
+        formatValue={(value) => value.toFixed(2)}
+        error={errors.site?.theme?.fuwari?.background?.dark?.opacity?.message}
+      />
+      <RangeField
+        name="site.theme.fuwari.background.backdropBlur"
+        label={m.settings_site_field_backdrop_blur()}
+        hint={m.settings_site_field_backdrop_blur_hint()}
+        min={DEFAULT_THEME_BLUR_MIN}
+        max={DEFAULT_THEME_BLUR_MAX}
+        step={1}
+        unit="px"
+        defaultValue={0}
+        error={errors.site?.theme?.fuwari?.background?.backdropBlur?.message}
+      />
+      <RangeField
+        name="site.theme.fuwari.background.transitionDuration"
+        label={m.settings_site_field_transition_duration()}
+        hint={m.settings_site_field_transition_duration_hint()}
+        min={DEFAULT_THEME_TRANSITION_MIN}
+        max={DEFAULT_THEME_TRANSITION_MAX}
+        step={50}
+        unit="ms"
+        defaultValue={300}
+        error={
+          errors.site?.theme?.fuwari?.background?.transitionDuration?.message
+        }
       />
       <FuwariHuePreview />
     </>

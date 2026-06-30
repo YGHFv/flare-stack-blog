@@ -34,6 +34,14 @@ const config = defineConfig(({ mode }) => {
         ),
       },
     },
+    optimizeDeps: {
+      exclude: [
+        "@cloudflare/workers-oauth-provider",
+        "cloudflare:sockets",
+        "cloudflare:workers",
+        "worker-mailer",
+      ],
+    },
     plugins: [
       paraglideVitePlugin({
         project: "./project.inlang",

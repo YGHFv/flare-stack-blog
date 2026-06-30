@@ -1,8 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
   CreateCommentInputSchema,
+  CreateMusicCommentInputSchema,
   DeleteCommentInputSchema,
   GetCommentsByPostIdInputSchema,
+  GetMusicCommentsBySongIdInputSchema,
+  GetMusicRepliesByRootIdInputSchema,
   GetMyCommentsInputSchema,
   GetRepliesByRootIdInputSchema,
 } from "@/features/comments/comments.schema";
@@ -44,6 +47,34 @@ export const getRepliesByRootIdFn = createServerFn()
     return result;
   });
 
+export const getRootMusicCommentsBySongIdFn = createServerFn()
+  .middleware([sessionMiddleware])
+  .inputValidator(GetMusicCommentsBySongIdInputSchema)
+  .handler(async ({ data, context }) => {
+    const session = context.session;
+
+    const result = await CommentService.getRootMusicCommentsBySongId(context, {
+      ...data,
+      viewerId: session?.user.id,
+    });
+
+    return result;
+  });
+
+export const getMusicRepliesByRootIdFn = createServerFn()
+  .middleware([sessionMiddleware])
+  .inputValidator(GetMusicRepliesByRootIdInputSchema)
+  .handler(async ({ data, context }) => {
+    const session = context.session;
+
+    const result = await CommentService.getMusicRepliesByRootId(context, {
+      ...data,
+      viewerId: session?.user.id,
+    });
+
+    return result;
+  });
+
 // Authed User APIs
 export const createCommentFn = createServerFn({
   method: "POST",
@@ -63,6 +94,24 @@ export const createCommentFn = createServerFn({
       await CommentService.createComment(context, data),
   );
 
+export const createMusicCommentFn = createServerFn({
+  method: "POST",
+})
+  .middleware([
+    createRateLimitMiddleware({
+      capacity: 10,
+      interval: "1m",
+      key: "music-comments:create",
+    }),
+    turnstileMiddleware,
+    authMiddleware,
+  ])
+  .inputValidator(CreateMusicCommentInputSchema)
+  .handler(
+    async ({ data, context }) =>
+      await CommentService.createMusicComment(context, data),
+  );
+
 export const deleteCommentFn = createServerFn({
   method: "POST",
 })
@@ -78,6 +127,23 @@ export const deleteCommentFn = createServerFn({
   .handler(
     async ({ data, context }) =>
       await CommentService.deleteComment(context, data),
+  );
+
+export const deleteMusicCommentFn = createServerFn({
+  method: "POST",
+})
+  .middleware([
+    createRateLimitMiddleware({
+      capacity: 10,
+      interval: "1m",
+      key: "music-comments:delete",
+    }),
+    authMiddleware,
+  ])
+  .inputValidator(DeleteCommentInputSchema)
+  .handler(
+    async ({ data, context }) =>
+      await CommentService.deleteMusicComment(context, data),
   );
 
 export const getMyCommentsFn = createServerFn()

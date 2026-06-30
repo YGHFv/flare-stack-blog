@@ -53,6 +53,19 @@ export const GetPostsCursorInputSchema = z.object({
   cursor: z.number().optional(),
   limit: z.number().optional(),
   tagName: z.string().optional(),
+  search: z.string().optional(),
+  tagNames: z
+    .preprocess((value) => {
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string") {
+        return value
+          .split(",")
+          .map((tagName) => tagName.trim())
+          .filter(Boolean);
+      }
+      return value;
+    }, z.array(z.string()).optional())
+    .optional(),
   excludePinned: z.boolean().optional(),
 });
 
@@ -127,8 +140,13 @@ export type PostItem = z.infer<typeof PostItemSchema>;
 export type PostWithToc = z.infer<typeof PostWithTocSchema>;
 
 export const POSTS_CACHE_KEYS = {
-  list: (version: string, limit: number, cursor: number, tagName: string) =>
-    ["posts", "list", version, limit, cursor, tagName] as const,
+  list: (
+    version: string,
+    limit: number,
+    cursor: number,
+    tagKey: string,
+    searchKey: string,
+  ) => ["posts", "list", version, limit, cursor, tagKey, searchKey] as const,
   detail: (version: string, slug: string) => [version, "post", slug] as const,
   related: (slug: string, limit?: number) =>
     ["posts", "related-ids", slug, limit] as const,

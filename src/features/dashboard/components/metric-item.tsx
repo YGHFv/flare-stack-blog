@@ -39,7 +39,7 @@ export function MetricItem({
   }, [value, prev]);
 
   return (
-    <div className="border border-border/30 bg-background p-4 flex flex-col justify-between hover:border-border/60 transition-colors">
+    <div className="admin-panel border border-border/30 bg-background p-4 flex flex-col justify-between hover:border-border/60 transition-colors">
       <div className="flex justify-between items-start mb-2">
         <span className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
           {icon}

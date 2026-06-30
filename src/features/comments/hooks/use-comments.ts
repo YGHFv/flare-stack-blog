@@ -6,7 +6,12 @@ import {
   adminDeleteCommentFn,
   moderateCommentFn,
 } from "../api/comments.admin.api";
-import { createCommentFn, deleteCommentFn } from "../api/comments.public.api";
+import {
+  createCommentFn,
+  createMusicCommentFn,
+  deleteCommentFn,
+  deleteMusicCommentFn,
+} from "../api/comments.public.api";
 
 export function useComments(postId?: number) {
   const queryClient = useQueryClient();
@@ -100,6 +105,100 @@ export function useComments(postId?: number) {
         exact: false,
       });
       // Also invalidate user's own comments list
+      queryClient.invalidateQueries({
+        queryKey: COMMENTS_KEYS.mine,
+        exact: false,
+      });
+      toast.success(m.comments_toast_delete_success());
+    },
+  });
+
+  return {
+    createComment: createCommentMutation.mutateAsync,
+    isCreating: createCommentMutation.isPending,
+    deleteComment: deleteCommentMutation.mutateAsync,
+    isDeleting: deleteCommentMutation.isPending,
+  };
+}
+
+export function useMusicComments(songId?: string) {
+  const queryClient = useQueryClient();
+
+  const createCommentMutation = useMutation({
+    mutationFn: async (input: Parameters<typeof createMusicCommentFn>[0]) => {
+      return await createMusicCommentFn(input);
+    },
+    onSuccess: (result) => {
+      if (result.error) {
+        const reason = result.error.reason;
+        switch (reason) {
+          case "ROOT_COMMENT_NOT_FOUND":
+          case "REPLY_TO_COMMENT_NOT_FOUND":
+            toast.error(m.comments_toast_deleted_refresh());
+            return;
+          case "INVALID_ROOT_ID":
+          case "ROOT_COMMENT_POST_MISMATCH":
+          case "REPLY_TO_COMMENT_ROOT_MISMATCH":
+          case "ROOT_COMMENT_CANNOT_HAVE_REPLY_TO":
+            toast.error(m.comments_toast_structure_error());
+            return;
+          default: {
+            reason satisfies never;
+            toast.error(m.comments_toast_unknown_error());
+            return;
+          }
+        }
+      }
+
+      if (songId) {
+        queryClient.invalidateQueries({
+          queryKey: COMMENTS_KEYS.musicRoots(songId),
+          exact: false,
+        });
+        queryClient.invalidateQueries({
+          queryKey: COMMENTS_KEYS.musicRepliesLists(songId),
+          exact: false,
+        });
+      }
+      queryClient.invalidateQueries({
+        queryKey: COMMENTS_KEYS.mine,
+        exact: false,
+      });
+    },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (input: Parameters<typeof deleteMusicCommentFn>[0]) => {
+      return await deleteMusicCommentFn(input);
+    },
+    onSuccess: (result) => {
+      if (result.error) {
+        const reason = result.error.reason;
+        switch (reason) {
+          case "COMMENT_NOT_FOUND":
+            toast.error(m.comments_toast_delete_not_found());
+            return;
+          case "PERMISSION_DENIED":
+            toast.error(m.comments_toast_delete_denied());
+            return;
+          default: {
+            reason satisfies never;
+            toast.error(m.comments_toast_delete_error());
+            return;
+          }
+        }
+      }
+
+      if (songId) {
+        queryClient.invalidateQueries({
+          queryKey: COMMENTS_KEYS.musicRoots(songId),
+          exact: false,
+        });
+        queryClient.invalidateQueries({
+          queryKey: COMMENTS_KEYS.musicRepliesLists(songId),
+          exact: false,
+        });
+      }
       queryClient.invalidateQueries({
         queryKey: COMMENTS_KEYS.mine,
         exact: false,

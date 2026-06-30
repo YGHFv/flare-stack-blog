@@ -30,7 +30,12 @@ export function PostPage({ post }: PostPageProps) {
       {/* Back Link */}
       <nav className="py-12 flex items-center justify-between">
         <button
-          onClick={() => navigate({ to: "/posts" })}
+          onClick={() =>
+            navigate({
+              to: "/posts",
+              search: { q: undefined, tagNames: undefined },
+            })
+          }
           className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity"
         >
           <ArrowLeft size={12} />
@@ -78,7 +83,7 @@ export function PostPage({ post }: PostPageProps) {
                       <Link
                         key={tag.id}
                         to="/posts"
-                        search={{ tagName: tag.name }}
+                        search={{ q: undefined, tagNames: [tag.name] }}
                         className="hover:text-foreground transition-colors"
                       >
                         #{tag.name}

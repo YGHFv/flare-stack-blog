@@ -80,6 +80,7 @@ export function HomePage({ posts, pinnedPosts, popularPosts }: HomePageProps) {
         >
           <Link
             to="/posts"
+            search={{ q: undefined, tagNames: undefined }}
             className="fuwari-btn-regular mx-6 rounded-lg h-10 px-6 mt-4 flex items-center justify-center mb-4 md:mb-0 md:mx-auto"
           >
             {m.home_view_all_posts()}

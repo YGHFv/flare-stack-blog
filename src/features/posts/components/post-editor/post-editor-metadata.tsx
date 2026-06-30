@@ -1,7 +1,20 @@
-import { Loader2, Pin, PinOff, Sparkles } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  ImageIcon,
+  Loader2,
+  Pin,
+  PinOff,
+  Sparkles,
+  Upload,
+} from "lucide-react";
+import type { ChangeEvent } from "react";
+import { useRef } from "react";
 import TextareaAutosize from "react-textarea-autosize";
+import { toast } from "sonner";
 import DatePicker from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
+import { uploadImageFn } from "@/features/media/api/media.api";
+import { MEDIA_KEYS } from "@/features/media/queries";
 import { TagSelector } from "@/features/tags/components/tag-selector";
 import { POST_STATUSES } from "@/lib/db/schema";
 import { toLocalDateString } from "@/lib/utils";
@@ -38,6 +51,37 @@ export function PostEditorMetadata({
   onGenerateSummary,
   onGenerateTags,
 }: PostEditorMetadataProps) {
+  const queryClient = useQueryClient();
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const coverUploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("image", file);
+      return uploadImageFn({ data: formData });
+    },
+    onSuccess: (result) => {
+      if (result.error) {
+        toast.error("封面图上传失败");
+        return;
+      }
+
+      onPostChange({ coverImage: result.data.url });
+      queryClient.invalidateQueries({ queryKey: MEDIA_KEYS.all });
+      toast.success("封面图已上传");
+    },
+    onError: (error) => {
+      toast.error("封面图上传失败", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    },
+  });
+
+  const handleCoverUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) coverUploadMutation.mutate(file);
+    event.target.value = "";
+  };
+
   return (
     <>
       <div className="mb-12">
@@ -183,6 +227,55 @@ export function PostEditorMetadata({
               ) : (
                 <Sparkles size={10} />
               )}
+            </button>
+          </div>
+        </div>
+
+        <div className="col-span-1 space-y-3 md:col-span-3">
+          <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
+            封面图 URL
+          </label>
+          <div className="grid gap-4 md:grid-cols-[12rem_1fr] md:items-center">
+            <div className="aspect-[16/9] overflow-hidden border border-border/30 bg-muted/20">
+              {post.coverImage ? (
+                <img
+                  src={post.coverImage}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-muted-foreground/45">
+                  <ImageIcon size={28} strokeWidth={1.5} />
+                </div>
+              )}
+            </div>
+            <Input
+              type="url"
+              value={post.coverImage || ""}
+              onChange={(e) => onPostChange({ coverImage: e.target.value })}
+              className="h-auto border-none bg-transparent p-0 px-0 text-xs font-mono text-foreground shadow-none placeholder:text-muted-foreground/30 focus-visible:ring-0"
+              placeholder="https://example.com/cover.jpg"
+            />
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+              onChange={handleCoverUpload}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              disabled={coverUploadMutation.isPending}
+              className="flex w-fit items-center gap-2 border border-border/40 px-3 py-2 text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {coverUploadMutation.isPending ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Upload size={12} />
+              )}
+              {coverUploadMutation.isPending ? "上传中" : "上传本地图片"}
             </button>
           </div>
         </div>

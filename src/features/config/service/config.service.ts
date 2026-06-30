@@ -15,6 +15,20 @@ import { purgeSiteCDNCache } from "@/lib/invalidate";
 const DEFAULT_SMTP_PORT = 465;
 const RESEND_SMTP_HOST = "smtp.resend.com";
 const RESEND_SMTP_USERNAME = "resend";
+const LEGACY_DEFAULT_BACKGROUND_IMAGE = "/images/home-bg.webp";
+const LEGACY_DEFAULT_SITE_TITLE = "\u7ad9\u70b9\u540d\u79f0";
+const LEGACY_DEFAULT_AUTHOR = "\u4f5c\u8005";
+
+type ThemeBackgroundAppearanceInput = {
+  light?: {
+    opacity?: number;
+  };
+  dark?: {
+    opacity?: number;
+  };
+  backdropBlur?: number;
+  transitionDuration?: number;
+};
 
 function resolveEmailConfig(config: SystemConfig | null | undefined) {
   const email = config?.email;
@@ -81,14 +95,69 @@ function migrateSocial(social: unknown): SocialLink[] {
   return [...blogConfig.social];
 }
 
+function resolveThemeBackgroundAppearance(
+  config: ThemeBackgroundAppearanceInput | undefined,
+  fallback:
+    | typeof blogConfig.theme.fuwari.background
+    | typeof blogConfig.theme.atelier.background,
+) {
+  return {
+    light: {
+      opacity: config?.light?.opacity ?? fallback.light.opacity,
+    },
+    dark: {
+      opacity: config?.dark?.opacity ?? fallback.dark.opacity,
+    },
+    backdropBlur: config?.backdropBlur ?? fallback.backdropBlur,
+    transitionDuration:
+      config?.transitionDuration ?? fallback.transitionDuration,
+  };
+}
+
+function resolveThemeBackgroundImage(value: string | undefined, fallback = "") {
+  if (!value || value === LEGACY_DEFAULT_BACKGROUND_IMAGE) {
+    return fallback;
+  }
+  return value;
+}
+
+function resolveThemeBackgroundImages(
+  values: Array<string> | undefined,
+  fallback: Array<string>,
+) {
+  if (!values || values.length === 0) return fallback;
+
+  const migratedValues = values.map((value) =>
+    resolveThemeBackgroundImage(value, blogConfig.theme.atelier.homeBg),
+  );
+
+  return migratedValues;
+}
+
+function resolveSiteText(
+  value: string | undefined,
+  fallback: string,
+  legacyDefaults: Array<string> = [],
+) {
+  const trimmedValue = value?.trim();
+  if (!trimmedValue || legacyDefaults.includes(trimmedValue)) return fallback;
+  return value;
+}
+
 export function resolveSiteConfig(
   config: SystemConfig | null | undefined,
 ): SiteConfig {
-  const configDefaultBackground = config?.site?.theme?.default?.background;
+  const configDefaultBackground =
+    config?.site?.theme?.default?.background ??
+    blogConfig.theme.default.background;
 
   return FullSiteConfigSchema.parse({
-    title: config?.site?.title ?? blogConfig.title,
-    author: config?.site?.author ?? blogConfig.author,
+    title: resolveSiteText(config?.site?.title, blogConfig.title, [
+      LEGACY_DEFAULT_SITE_TITLE,
+    ]),
+    author: resolveSiteText(config?.site?.author, blogConfig.author, [
+      LEGACY_DEFAULT_AUTHOR,
+    ]),
     description: config?.site?.description ?? blogConfig.description,
     social: migrateSocial(config?.site?.social),
     icons: {
@@ -107,30 +176,59 @@ export function resolveSiteConfig(
         navBarName:
           config?.site?.theme?.default?.navBarName ??
           blogConfig.theme.default.navBarName,
-        background: configDefaultBackground
-          ? {
-              homeImage: configDefaultBackground.homeImage ?? "",
-              globalImage: configDefaultBackground.globalImage ?? "",
-              light: {
-                opacity: configDefaultBackground.light?.opacity ?? 0.15,
-              },
-              dark: {
-                opacity: configDefaultBackground.dark?.opacity ?? 0.1,
-              },
-              backdropBlur: configDefaultBackground.backdropBlur ?? 8,
-              transitionDuration:
-                configDefaultBackground.transitionDuration ?? 600,
-            }
-          : undefined,
+        background: {
+          homeImage: resolveThemeBackgroundImage(
+            configDefaultBackground.homeImage,
+            blogConfig.theme.default.background.homeImage,
+          ),
+          globalImage: resolveThemeBackgroundImage(
+            configDefaultBackground.globalImage,
+            blogConfig.theme.default.background.globalImage,
+          ),
+          light: {
+            opacity: configDefaultBackground.light?.opacity ?? 0.15,
+          },
+          dark: {
+            opacity: configDefaultBackground.dark?.opacity ?? 0.1,
+          },
+          backdropBlur: configDefaultBackground.backdropBlur ?? 8,
+          transitionDuration: configDefaultBackground.transitionDuration ?? 600,
+        },
       },
       fuwari: {
-        homeBg:
-          config?.site?.theme?.fuwari?.homeBg ?? blogConfig.theme.fuwari.homeBg,
+        homeBg: resolveThemeBackgroundImage(
+          config?.site?.theme?.fuwari?.homeBg,
+          blogConfig.theme.fuwari.homeBg,
+        ),
         avatar:
           config?.site?.theme?.fuwari?.avatar ?? blogConfig.theme.fuwari.avatar,
         primaryHue:
           config?.site?.theme?.fuwari?.primaryHue ??
           blogConfig.theme.fuwari.primaryHue,
+        background: resolveThemeBackgroundAppearance(
+          config?.site?.theme?.fuwari?.background,
+          blogConfig.theme.fuwari.background,
+        ),
+      },
+      atelier: {
+        homeBg: resolveThemeBackgroundImage(
+          config?.site?.theme?.atelier?.homeBg,
+          blogConfig.theme.atelier.homeBg,
+        ),
+        avatar:
+          config?.site?.theme?.atelier?.avatar ??
+          blogConfig.theme.atelier.avatar,
+        primaryHue:
+          config?.site?.theme?.atelier?.primaryHue ??
+          blogConfig.theme.atelier.primaryHue,
+        backgroundImages: resolveThemeBackgroundImages(
+          config?.site?.theme?.atelier?.backgroundImages,
+          blogConfig.theme.atelier.backgroundImages,
+        ),
+        background: resolveThemeBackgroundAppearance(
+          config?.site?.theme?.atelier?.background,
+          blogConfig.theme.atelier.background,
+        ),
       },
     },
   });

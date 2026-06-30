@@ -55,7 +55,7 @@ export function Tags() {
           <Link
             key={tag.id}
             to="/posts"
-            search={{ tagName: tag.name }}
+            search={{ q: undefined, tagNames: [tag.name] }}
             className="fuwari-btn-regular h-8 text-sm px-3 rounded-lg flex items-center gap-2"
           >
             <span>{tag.name}</span>

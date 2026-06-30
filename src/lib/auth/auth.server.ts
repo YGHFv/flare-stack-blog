@@ -31,10 +31,16 @@ export function getAuth({ db, env }: { db: DB; env: Env }) {
     BETTER_AUTH_SECRET,
     BETTER_AUTH_URL,
     ADMIN_EMAIL,
+    ENVIRONMENT,
     LOCALE,
     GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET,
   } = serverEnv(env);
+  const trustedOrigins = new Set([BETTER_AUTH_URL]);
+  if (ENVIRONMENT !== "prod") {
+    trustedOrigins.add("http://127.0.0.1:3000");
+    trustedOrigins.add("http://localhost:3000");
+  }
 
   // 固定 10 个 DO 实例池，随机选择避免冷启动
   const PASSWORD_HASHER_POOL_SIZE = 10;
@@ -153,6 +159,7 @@ export function getAuth({ db, env }: { db: DB; env: Env }) {
     },
     secret: BETTER_AUTH_SECRET,
     baseURL: BETTER_AUTH_URL,
+    trustedOrigins: [...trustedOrigins],
   });
 }
 

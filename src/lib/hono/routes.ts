@@ -2,8 +2,10 @@ import handler from "@tanstack/react-start/server-entry";
 import type { Context } from "hono";
 import { Hono } from "hono";
 import { proxy } from "hono/proxy";
+import githubRoute from "@/features/github/api/hono/contributions.route";
 import { exportDownloadRoute } from "@/features/import-export/api/hono/download.route";
 import { handleImageRequest } from "@/features/media/service/media.service";
+import musicRoute from "@/features/music/api/hono/music.route";
 import postsDetailRoute from "@/features/posts/api/hono/posts.detail.route";
 import postsListRoute from "@/features/posts/api/hono/posts.list.route";
 import postsRelatedRoute from "@/features/posts/api/hono/posts.related.route";
@@ -37,7 +39,9 @@ const publicApi = new Hono<{ Bindings: Env }>()
   .route("/post", postsDetailRoute)
   .route("/post", postsRelatedRoute)
   .route("/tags", tagsRoute)
-  .route("/search", searchRoute);
+  .route("/search", searchRoute)
+  .route("/github", githubRoute)
+  .route("/music", musicRoute);
 
 // Mount public API
 app.route("/api", publicApi);

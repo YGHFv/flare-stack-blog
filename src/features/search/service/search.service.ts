@@ -1,5 +1,5 @@
 import { insert, search as oramaSearch, remove } from "@orama/orama";
-import { and, eq, lte } from "drizzle-orm";
+import { and, desc, eq, like, lte, or } from "drizzle-orm";
 import { convertToPlainText } from "@/features/posts/utils/content";
 import { createMyDb } from "@/features/search/model/schema";
 import {
@@ -28,6 +28,10 @@ export async function search(context: DbContext, data: SearchQueryInput) {
     term: data.q,
     limit: Math.min(data.limit, 25),
   });
+
+  if (result.hits.length === 0) {
+    return await searchPublishedPostsFromDb(context, data);
+  }
 
   return result.hits.map((hit) => {
     const { document, score } = hit;
@@ -60,6 +64,63 @@ export async function search(context: DbContext, data: SearchQueryInput) {
         title: titleHighlight,
         summary: summaryHighlight,
         contentSnippet: contentHighlight,
+      },
+    };
+  });
+}
+
+async function searchPublishedPostsFromDb(
+  context: DbContext,
+  data: SearchQueryInput,
+) {
+  const query = data.q.trim();
+  const posts = await context.db.query.PostsTable.findMany({
+    where: and(
+      eq(PostsTable.status, "published"),
+      lte(PostsTable.publishedAt, new Date()),
+      or(
+        like(PostsTable.title, `%${query}%`),
+        like(PostsTable.summary, `%${query}%`),
+      ),
+    ),
+    orderBy: [desc(PostsTable.publishedAt), desc(PostsTable.id)],
+    limit: Math.min(data.limit, 25),
+    with: {
+      postTags: {
+        with: {
+          tag: true,
+        },
+      },
+    },
+  });
+
+  return posts.map((post) => {
+    const content = convertToPlainText(post.contentJson);
+    return {
+      post: {
+        id: post.id.toString(),
+        slug: post.slug,
+        title: post.title,
+        summary: post.summary ?? "",
+        tags: post.postTags.map((pt) => pt.tag.name),
+      },
+      score: 1,
+      matches: {
+        title: buildSnippet({
+          text: post.title,
+          terms: [],
+          fallbackTerm: query,
+        }),
+        summary: buildSnippet({
+          text: post.summary ?? "",
+          terms: [],
+          fallbackTerm: query,
+        }),
+        contentSnippet: buildSnippet({
+          text: content,
+          terms: [],
+          fallbackTerm: query,
+        }),
       },
     };
   });

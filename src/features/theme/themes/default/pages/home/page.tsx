@@ -109,6 +109,7 @@ export function HomePage({ posts, pinnedPosts }: HomePageProps) {
         <div className="pt-8">
           <Link
             to="/posts"
+            search={{ q: undefined, tagNames: undefined }}
             className="text-sm font-mono text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
           >
             <Terminal size={14} />

@@ -57,9 +57,11 @@ export async function getPublicTags(
     executionCtx: ExecutionContext;
   },
 ) {
+  const version = await CacheService.getVersion(context, "posts:list");
+
   return await CacheService.get(
     context,
-    TAGS_CACHE_KEYS.publicList,
+    [version, ...TAGS_CACHE_KEYS.publicList],
     z.array(TagWithCountSchema),
     async () => {
       return await TagRepo.getAllTagsWithCount(context.db, {

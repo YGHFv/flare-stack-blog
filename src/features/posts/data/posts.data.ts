@@ -23,6 +23,10 @@ import { PostsTable, PostTagsTable, TagsTable } from "@/lib/db/schema";
 const DEFAULT_PAGE_SIZE = 12;
 const DEFAULT_SITEMAP_BATCH_SIZE = 500;
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
 export type SitemapPostRow = {
   id: number;
   slug: string;
@@ -63,6 +67,7 @@ export async function getPosts(
       id: PostsTable.id,
       title: PostsTable.title,
       summary: PostsTable.summary,
+      coverImage: PostsTable.coverImage,
       readTimeInMinutes: PostsTable.readTimeInMinutes,
       slug: PostsTable.slug,
       status: PostsTable.status,
@@ -106,7 +111,9 @@ export async function getPostsCursor(
     cursor?: number;
     limit?: number;
     publicOnly?: boolean;
+    search?: string;
     tagName?: string;
+    tagNames?: Array<string>;
     excludePinned?: boolean;
   } = {},
 ): Promise<{
@@ -117,9 +124,18 @@ export async function getPostsCursor(
     cursor,
     limit = DEFAULT_PAGE_SIZE,
     publicOnly,
+    search,
     tagName,
+    tagNames,
     excludePinned,
   } = options;
+  const normalizedTagNames = [
+    ...new Set(
+      [...(tagNames ?? []), tagName]
+        .filter(isNonEmptyString)
+        .map((name) => name.trim()),
+    ),
+  ].sort();
 
   // Build base conditions from helper
   const baseConditions = buildPostWhereClause({ publicOnly });
@@ -152,19 +168,46 @@ export async function getPostsCursor(
     }
   }
 
-  if (tagName) {
-    conditions.push(eq(TagsTable.name, tagName));
+  if (search?.trim()) {
+    const searchTerm = search.trim();
+    conditions.push(
+      or(
+        like(PostsTable.title, `%${searchTerm}%`),
+        like(PostsTable.summary, `%${searchTerm}%`),
+      ),
+    );
+  }
+
+  if (normalizedTagNames.length > 0) {
+    const matchingPosts = await db
+      .select({
+        postId: PostTagsTable.postId,
+      })
+      .from(PostTagsTable)
+      .innerJoin(TagsTable, eq(PostTagsTable.tagId, TagsTable.id))
+      .where(inArray(TagsTable.name, normalizedTagNames))
+      .groupBy(PostTagsTable.postId)
+      .having(
+        sql`count(distinct ${TagsTable.name}) = ${normalizedTagNames.length}`,
+      );
+
+    const matchingPostIds = matchingPosts.map((row) => row.postId);
+    if (matchingPostIds.length === 0) {
+      return { items: [], nextCursor: null };
+    }
+    conditions.push(inArray(PostsTable.id, matchingPostIds));
   }
 
   if (excludePinned) {
     conditions.push(sql`${PostsTable.pinnedAt} IS NULL`);
   }
 
-  let query = db
+  const query = db
     .select({
       id: PostsTable.id,
       title: PostsTable.title,
       summary: PostsTable.summary,
+      coverImage: PostsTable.coverImage,
       readTimeInMinutes: PostsTable.readTimeInMinutes,
       slug: PostsTable.slug,
       status: PostsTable.status,
@@ -175,12 +218,6 @@ export async function getPostsCursor(
     })
     .from(PostsTable)
     .$dynamic();
-
-  if (tagName) {
-    query = query
-      .innerJoin(PostTagsTable, eq(PostsTable.id, PostTagsTable.postId))
-      .innerJoin(TagsTable, eq(PostTagsTable.tagId, TagsTable.id));
-  }
 
   const itemsWithPotentialNext = await query
     .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -297,6 +334,7 @@ export async function findPinnedPosts(db: DB) {
       id: true,
       title: true,
       summary: true,
+      coverImage: true,
       readTimeInMinutes: true,
       slug: true,
       status: true,
@@ -330,6 +368,7 @@ export async function findPostsBySlugs(db: DB, slugs: string[]) {
       id: true,
       title: true,
       summary: true,
+      coverImage: true,
       readTimeInMinutes: true,
       slug: true,
       status: true,
@@ -517,6 +556,7 @@ export async function getPublicPostsByIds(db: DB, ids: Array<number>) {
       id: PostsTable.id,
       title: PostsTable.title,
       summary: PostsTable.summary,
+      coverImage: PostsTable.coverImage,
       readTimeInMinutes: PostsTable.readTimeInMinutes,
       slug: PostsTable.slug,
       status: PostsTable.status,
